@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HappySmile — AI Voice &amp; Handoff Concierge (2-Screen Product Prototype)</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans (UI), Newsreader (Human Editorial Accents), JetBrains Mono (Numbers & Timestamps) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            serif: ['"Newsreader"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+          colors: {
+            ivory: '#F6F5F0',
+            stoneLine: '#E6E4DC',
+            spruce: {
+              DEFAULT: '#0C544C',
+              dark: '#083E38',
+              light: '#147267',
+              tint: '#E3F4EE',
+              soft: '#F0F9F6',
+            },
+            coral: {
+              DEFAULT: '#D65232',
+              dark: '#B54024',
+              tint: '#FFF1EC',
+            },
+            amberWarm: {
+              DEFAULT: '#B9770E',
+              tint: '#FEF7E6',
+            },
+            wa: {
+              DEFAULT: '#1D8A4E',
+              tint: '#EAF7EF',
+            },
+            ink: {
+              DEFAULT: '#181E1C',
+              muted: '#57635F',
+              subtle: '#84908C',
+            }
+          },
+          boxShadow: {
+            editorial: '0 1px 2px rgba(24, 30, 28, 0.04), 0 8px 24px -6px rgba(24, 30, 28, 0.06)',
+            device: '0 24px 60px -16px rgba(15, 28, 25, 0.18), 0 4px 16px -4px rgba(15, 28, 25, 0.08)',
+            pin: '0 4px 12px rgba(12, 84, 76, 0.35)',
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Base editorial smoothness */
+    html, body {
+      background-color: #F6F5F0;
+      color: #181E1C;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Refined minimal scrollbars */
+    .calm-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .calm-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .calm-scroll::-webkit-scrollbar-thumb {
+      background: #D8D5CB;
+      border-radius: 9999px;
+    }
+    .calm-scroll::-webkit-scrollbar-thumb:hover {
+      background: #B8B4A7;
+    }
+
+    /* Subtle countdown ring pulse */
+    @keyframes softRingPulse {
+      0% { transform: scale(0.95); opacity: 0.65; }
+      75% { transform: scale(1.38); opacity: 0; }
+      100% { transform: scale(1.38); opacity: 0; }
+    }
+    .pulse-ring {
+      animation: softRingPulse 2.1s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+
+    /* Animated voice equalizer bars */
+    @keyframes eqDance {
+      0%, 100% { transform: scaleY(0.28); }
+      50% { transform: scaleY(1); }
+    }
+    .eq-bar {
+      transform-origin: center bottom;
+      transition: transform 0.2s ease;
+    }
+    .eq-bar.active {
+      animation: eqDance 0.78s ease-in-out infinite;
+    }
+
+    /* Floating PM rationale pin gentle pulse */
+    @keyframes pinGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(214, 82, 50, 0.38); }
+      50% { box-shadow: 0 0 0 7px rgba(214, 82, 50, 0); }
+    }
+    .pm-pin-pulse {
+      animation: pinGlow 2.4s infinite;
+    }
+
+    /* Custom range input styling for audio scrubber */
+    input[type="range"].audio-range {
+      -webkit-appearance: none;
+      appearance: none;
+      background: #E6E4DC;
+      height: 4px;
+      border-radius: 999px;
+      outline: none;
+    }
+    input[type="range"].audio-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #0C544C;
+      cursor: pointer;
+      border: 2px solid #FFFFFF;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Smooth fade-in transitions */
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-ivory text-ink selection:bg-spruce-tint selection:text-spruce">
+
+  <!-- =========================================================================
+       FLOATING SHOWCASE HEADER BAR
+       Minimal editorial navigation: Logo · 3-Mode Switcher · PM Rationale Toggle
+  ========================================================================== -->
+  <header class="sticky top-0 z-40 px-3 sm:px-6 pt-3 pb-2 bg-ivory/85 backdrop-blur-md">
+    <div class="max-w-[1540px] mx-auto bg-white/95 border border-stoneLine rounded-2xl px-4 py-2.5 shadow-editorial flex flex-wrap items-center justify-between gap-3">
+
+      <!-- Left: HappySmile Custom Brand Mark + Context Subtitle -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-spruce text-white flex items-center justify-center shrink-0 shadow-sm">
+          <!-- Minimal Editorial Tooth + Smile Vector Mark -->
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7.5 4.2C5.2 4.2 3.8 6.1 4.1 8.8c.3 2.5 1.3 4.6 1.8 7.5.3 1.7 1.2 3.5 2.4 3.5 1.1 0 1.4-2.1 2.2-3.4.5-.8 1-.9 1.5-.9s1 .1 1.5.9c.8 1.3 1.1 3.4 2.2 3.4 1.2 0 2.1-1.8 2.4-3.5.5-2.9 1.5-5 1.8-7.5.3-2.7-1.1-4.6-3.4-4.6-1.6 0-2.6.8-4.5.8s-2.9-.8-4.5-.8Z" />
+            <path d="M9.3 10.6c.8.9 1.7 1.3 2.7 1.3s1.9-.4 2.7-1.3" stroke-width="1.7" />
+          </svg>
+        </div>
+        <div class="leading-tight">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-[15px] tracking-tight text-ink">HappySmile</span>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-semibold bg-spruce-tint text-spruce">AI Voice &amp; Handoff Concierge</span>
+          </div>
+          <p class="text-[11px] text-ink-muted mt-0.5">2-Screen Product Prototype · India Dental Clinics (12 Locations)</p>
+        </div>
+      </div>
+
+      <!-- Center: Segmented 3-Mode View Switcher -->
+      <nav aria-label="Prototype view switcher" class="flex items-center bg-ivory p-1 rounded-xl border border-stoneLine">
+        <button id="view-btn-both" onclick="setViewMode('both')" class="view-switch-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-spruce shadow-xs ring-1 ring-stoneLine">
+          Both Screens
+        </button>
+        <button id="view-btn-screen1" onclick="setViewMode('screen1')" class="view-switch-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-ink-muted hover:text-ink">
+          Screen 1 · Patient <span class="hidden md:inline opacity-70">(Mobile)</span>
+        </button>
+        <button id="view-btn-screen2" onclick="setViewMode('screen2')" class="view-switch-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-ink-muted hover:text-ink">
+          Screen 2 · Front Desk <span class="hidden md:inline opacity-70">(Desktop)</span>
+        </button>
+      </nav>
+
+      <!-- Right: Toggle Switch "PM Design Rationale" (OFF by default) -->
+      <button id="pm-toggle-btn" onclick="togglePMRationale()" role="switch" aria-checked="false" class="group flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-stoneLine bg-ivory/70 hover:bg-ivory transition-all">
+        <span class="text-xs font-semibold text-ink-muted group-hover:text-ink transition-colors">PM Design Rationale</span>
+        <span id="pm-toggle-track" class="relative inline-flex h-5 w-9 items-center rounded-full bg-[#D7D4CA] transition-colors">
+          <span id="pm-toggle-thumb" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition-transform translate-x-1"></span>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <!-- =========================================================================
+       PM RATIONALE ACTIVE RIBBON (Hidden by default; shown when toggle ON)
+  ========================================================================== -->
+  <div id="pm-rationale-banner" class="hidden px-3 sm:px-6 pt-1">
+    <div class="max-w-[1540px] mx-auto bg-[#1D2825] text-[#F2F1EC] rounded-xl px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-sm animate-fade-in">
+      <div class="flex items-center gap-2.5">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-coral text-white text-[10px] font-bold shrink-0">PM</span>
+        <p class="leading-snug">
+          <span class="font-semibold text-white">Stakeholder Tension Map Active:</span>
+          Click any coral numbered pin (<span class="font-mono text-[#FFB39E]">1–6</span>) to inspect how each UX decision resolves the
+          <span class="underline decoration-white/30">Ops Head's speed myth</span>,
+          <span class="underline decoration-white/30">Founder's "sound human" trap</span>, and
+          <span class="underline decoration-white/30">Front-Desk Lead's trust gap</span>.
+        </p>
+      </div>
+      <button onclick="openRationaleModal('all')" class="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-semibold text-[11px] transition-colors shrink-0">
+        View Full Matrix
+      </button>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MAIN WORKSPACE: SIDE-BY-SIDE OR FOCUSED SCREEN LAYOUT
+  ========================================================================== -->
+  <main class="flex-1 w-full max-w-[1540px] mx-auto px-3 sm:px-6 py-5 sm:py-6">
+    <div id="prototype-grid" class="grid grid-cols-1 xl:grid-cols-[412px_minmax(0,1fr)] gap-7 items-start">
+
+      <!-- =====================================================================
+           SCREEN 1: THE PATIENT MOMENT (iPHONE 15 PRO FRAME)
+           "The Anti-Spam, Patient-Controlled Concierge Bridge"
+      ====================================================================== -->
+      <section id="section-screen1" class="flex flex-col items-center w-full">
+        <!-- Editorial Caption Header -->
+        <div class="w-full max-w-[404px] mb-3 flex items-end justify-between px-1">
+          <div>
+            <p class="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-spruce">Screen 1 · Patient Moment</p>
+            <h1 class="text-[15px] font-bold text-ink tracking-tight mt-0.5">The moment a person asks to be contacted</h1>
+          </div>
+          <span class="font-mono text-[10.5px] text-ink-muted bg-white border border-stoneLine px-2 py-0.5 rounded-md">390px · Mobile</span>
+        </div>
+
+        <!-- iPhone 15 Pro Titanium Bezel Frame -->
+        <div class="w-full max-w-[404px] rounded-[50px] p-[9px] bg-gradient-to-b from-[#2B2F2D] via-[#1B1F1E] to-[#262B29] shadow-device ring-1 ring-black/20 relative">
+          <!-- Subtle Side Hardware Accents -->
+          <div class="hidden sm:block absolute -left-[2px] top-28 w-[2px] h-7 bg-[#3A403D] rounded-l"></div>
+          <div class="hidden sm:block absolute -left-[2px] top-40 w-[2px] h-12 bg-[#3A403D] rounded-l"></div>
+          <div class="hidden sm:block absolute -right-[2px] top-36 w-[2px] h-16 bg-[#3A403D] rounded-r"></div>
+
+          <!-- Inner Mobile Viewport -->
+          <div class="bg-ivory rounded-[41px] overflow-hidden flex flex-col min-h-[790px] border border-black/10 relative">
+
+            <!-- iOS Status Bar + Dynamic Island -->
+            <div class="bg-white px-6 pt-3 pb-2 flex items-center justify-between text-[11px] font-semibold text-ink select-none relative">
+              <span class="font-mono text-[11px] font-semibold">4:49</span>
+              <div class="w-[96px] h-[24px] bg-[#111413] rounded-full absolute left-1/2 -translate-x-1/2 top-2 flex items-center justify-end pr-2">
+                <span class="w-2 h-2 rounded-full bg-[#1C2A35] ring-1 ring-white/10"></span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-ink" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="2" y="15" width="3" height="6" rx="1" />
+                  <rect x="7" y="11" width="3" height="10" rx="1" />
+                  <rect x="12" y="7" width="3" height="14" rx="1" />
+                  <rect x="17" y="3" width="3" height="18" rx="1" />
+                </svg>
+                <span class="text-[10px] font-bold tracking-tight">5G</span>
+                <div class="w-5 h-2.5 border border-ink/70 rounded-[3px] p-[1px] flex items-center">
+                  <div class="w-3.5 h-full bg-ink rounded-[1px]"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Subtle Clinic Trust Bar -->
+            <div class="bg-white px-4 py-2.5 border-b border-stoneLine flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-spruce text-white flex items-center justify-center shrink-0">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M7.5 4.2C5.2 4.2 3.8 6.1 4.1 8.8c.3 2.5 1.3 4.6 1.8 7.5.3 1.7 1.2 3.5 2.4 3.5 1.1 0 1.4-2.1 2.2-3.4.5-.8 1-.9 1.5-.9s1 .1 1.5.9c.8 1.3 1.1 3.4 2.2 3.4 1.2 0 2.1-1.8 2.4-3.5.5-2.9 1.5-5 1.8-7.5.3-2.7-1.1-4.6-3.4-4.6-1.6 0-2.6.8-4.5.8s-2.9-.8-4.5-.8Z" />
+                  </svg>
+                </div>
+                <div class="leading-tight">
+                  <p class="text-[12px] font-bold text-ink">HappySmile · Indiranagar</p>
+                  <p class="text-[10px] text-ink-muted">Bengaluru · 100 Feet Road</p>
+                </div>
+              </div>
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-spruce-tint text-spruce text-[10px] font-semibold">
+                <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                Verified Clinic
+              </span>
+            </div>
+
+            <!-- ===============================================================
+                 SCREEN 1 BODY CONTAINER (3 Interactive States)
+            ================================================================ -->
+            <div class="p-3.5 flex-1 flex flex-col gap-3">
+
+              <!-- Compact Enquiry Receipt Pill (Persistent across states) -->
+              <div class="flex items-center justify-between bg-white border border-stoneLine rounded-full px-3 py-1.5">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-1.5 h-1.5 rounded-full bg-wa shrink-0"></span>
+                  <p class="text-[11px] text-ink-muted truncate">
+                    Enquiry saved · <span class="font-semibold text-ink">Dental Implants</span> · Priya Menon
+                  </p>
+                </div>
+                <span class="font-mono text-[10px] text-ink-subtle shrink-0 ml-2">#HS-409</span>
+              </div>
+
+              <!-- *************************************************************
+                   STATE 1A: DEFAULT — ANTI-SPAM INSTANT CALL BRIDGE
+              ************************************************************** -->
+              <div id="s1-view-call" class="flex flex-col gap-3 animate-fade-in">
+
+                <!-- 1. Live Incoming Call Preview Card (Anti-Spam + Honest AI) -->
+                <div class="bg-white rounded-2xl p-3.5 border border-stoneLine shadow-editorial relative">
+                  <!-- Floating PM Pin #1 -->
+                  <button onclick="openRationaleModal('pin1')" class="pm-pin hidden absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #1">1</button>
+
+                  <!-- Countdown Header Row -->
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                      <!-- Pulsing Call Beacon -->
+                      <div class="relative w-9 h-9 flex items-center justify-center shrink-0">
+                        <span id="s1-beacon-ring" class="absolute inset-0 rounded-full bg-spruce/20 pulse-ring"></span>
+                        <span class="relative w-9 h-9 rounded-full bg-spruce-tint text-spruce flex items-center justify-center border border-spruce/15">
+                          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+                          </svg>
+                        </span>
+                      </div>
+                      <div>
+                        <p class="text-[10.5px] font-semibold uppercase tracking-wider text-spruce" id="s1-timer-kicker">Instant Callback Ready</p>
+                        <h2 id="s1-timer-headline" class="text-[16px] font-bold text-ink leading-tight mt-0.5">
+                          We're calling you in <span id="s1-countdown" class="font-mono text-spruce tabular-nums">00:42</span>
+                        </h2>
+                      </div>
+                    </div>
+
+                    <!-- Micro Pause / Call Now Controls -->
+                    <div class="flex items-center gap-1 shrink-0">
+                      <button id="s1-pause-btn" onclick="toggleCountdownPause()" class="px-2 py-1 rounded-lg border border-stoneLine bg-ivory hover:bg-white text-[10.5px] font-semibold text-ink-muted hover:text-ink transition-colors">
+                        Pause
+                      </button>
+                      <button id="s1-callnow-btn" onclick="triggerCallNow()" class="px-2 py-1 rounded-lg bg-spruce hover:bg-spruce-dark text-white text-[10.5px] font-semibold transition-colors">
+                        Call Now
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Caller ID Recognition Pill (Truecaller-Aware Anti-Spam) -->
+                  <div class="mt-3 rounded-xl bg-ivory/90 border border-stoneLine px-2.5 py-2 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="w-6 h-6 rounded-full bg-wa-tint text-wa flex items-center justify-center shrink-0">
+                        <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M16.403 12.652a3 3 0 000-5.304 3 3 0 00-3.75-3.751 3 3 0 00-5.305 0 3 3 0 00-3.751 3.75 3 3 0 000 5.305 3 3 0 003.75 3.751 3 3 0 005.305 0 3 3 0 003.751-3.75zm-2.546-4.46a.75.75 0 00-1.214-.883l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/>
+                        </svg>
+                      </span>
+                      <div class="min-w-0 leading-tight">
+                        <p class="text-[10.5px] text-ink-muted">Save / Watch for: <span class="font-semibold text-ink">HappySmile Dental</span></p>
+                        <p class="font-mono text-[12px] font-semibold text-ink tracking-tight mt-0.5 tabular-nums">+91 80 4568 1200</p>
+                      </div>
+                    </div>
+                    <button onclick="copyTextWithFeedback('+91 80 4568 1200', 'Clinic caller ID copied')" class="px-2 py-1 rounded-lg bg-white border border-stoneLine hover:border-spruce/40 text-[10.5px] font-semibold text-ink-muted hover:text-spruce transition-colors shrink-0">
+                      Copy
+                    </button>
+                  </div>
+
+                  <!-- Honest AI Identity Badge (Solves Founder's "Sound Human" Trap) -->
+                  <div class="mt-2.5 pt-2.5 border-t border-stoneLine/80 flex items-start gap-2.5">
+                    <!-- Warm Minimalist Editorial AI Avatar -->
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-spruce to-spruce-light text-white flex items-center justify-center shrink-0 relative shadow-xs">
+                      <span class="font-serif italic text-[14px] font-medium leading-none">A</span>
+                      <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-spruce-tint border-2 border-white flex items-center justify-center">
+                        <span class="w-1.5 h-1.5 rounded-full bg-spruce"></span>
+                      </span>
+                    </div>
+                    <div class="min-w-0 leading-snug">
+                      <div class="flex flex-wrap items-center gap-1.5">
+                        <p class="text-[12px] font-bold text-ink">Asha</p>
+                        <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-spruce-tint text-spruce">AI Scheduling Assistant</span>
+                      </div>
+                      <p class="text-[11px] text-ink-muted mt-0.5">
+                        2-min call to check slots &amp; connect you to <span class="font-medium text-ink">Dr. Nair's desk</span> if needed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Interactive Language Selector + Live Voice Greeting Preview -->
+                <div class="bg-white rounded-2xl p-3.5 border border-stoneLine shadow-editorial relative">
+                  <!-- Floating PM Pin #2 -->
+                  <button onclick="openRationaleModal('pin2')" class="pm-pin hidden absolute -top-2.5 -right-2.5 w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #2">2</button>
+
+                  <div class="flex items-center justify-between mb-2">
+                    <p class="text-[11.5px] font-bold text-ink">Choose call language</p>
+                    <span class="text-[10px] text-ink-subtle">Updates Asha live</span>
+                  </div>
+
+                  <!-- 5 Indian Language Pills -->
+                  <div class="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Call language">
+                    <button onclick="selectPatientLang('English')" data-plang="English" class="plang-pill px-2.5 py-1 rounded-full text-[11px] font-medium border border-stoneLine bg-ivory text-ink-muted hover:text-ink transition-all">English</button>
+                    <button onclick="selectPatientLang('Hinglish')" data-plang="Hinglish" class="plang-pill px-2.5 py-1 rounded-full text-[11px] font-semibold border border-spruce bg-spruce text-white shadow-2xs transition-all">Hinglish</button>
+                    <button onclick="selectPatientLang('Hindi')" data-plang="Hindi" class="plang-pill px-2.5 py-1 rounded-full text-[11px] font-medium border border-stoneLine bg-ivory text-ink-muted hover:text-ink transition-all">हिन्दी</button>
+                    <button onclick="selectPatientLang('Kannada')" data-plang="Kannada" class="plang-pill px-2.5 py-1 rounded-full text-[11px] font-medium border border-stoneLine bg-ivory text-ink-muted hover:text-ink transition-all">ಕನ್ನಡ</button>
+                    <button onclick="selectPatientLang('Tamil')" data-plang="Tamil" class="plang-pill px-2.5 py-1 rounded-full text-[11px] font-medium border border-stoneLine bg-ivory text-ink-muted hover:text-ink transition-all">தமிழ்</button>
+                  </div>
+
+                  <!-- "Hear Asha's greeting" Mini Voice Preview Strip -->
+                  <div class="mt-2.5 rounded-xl bg-spruce-soft border border-spruce/15 p-2.5">
+                    <div class="flex items-center justify-between gap-2">
+                      <button id="greeting-play-btn" onclick="toggleGreetingPreview()" class="flex items-center gap-2 text-left group">
+                        <span id="greeting-play-icon" class="w-7 h-7 rounded-full bg-spruce text-white flex items-center justify-center shrink-0 group-hover:bg-spruce-dark transition-colors">
+                          <svg class="w-3 h-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                        </span>
+                        <div class="leading-tight">
+                          <p class="text-[11px] font-bold text-spruce">Hear Asha's greeting</p>
+                          <p id="greeting-play-status" class="text-[10px] text-ink-muted">Tap to preview · 0:07</p>
+                        </div>
+                      </button>
+
+                      <!-- Animated Equalizer Bars -->
+                      <div class="flex items-end gap-[2.5px] h-4 pr-1" aria-hidden="true">
+                        <span class="greeting-eq eq-bar w-[2.5px] h-2 bg-spruce/50 rounded-full" style="animation-delay: 0.05s"></span>
+                        <span class="greeting-eq eq-bar w-[2.5px] h-4 bg-spruce rounded-full" style="animation-delay: 0.2s"></span>
+                        <span class="greeting-eq eq-bar w-[2.5px] h-2.5 bg-spruce/70 rounded-full" style="animation-delay: 0.35s"></span>
+                        <span class="greeting-eq eq-bar w-[2.5px] h-3.5 bg-spruce rounded-full" style="animation-delay: 0.12s"></span>
+                        <span class="greeting-eq eq-bar w-[2.5px] h-2 bg-spruce/60 rounded-full" style="animation-delay: 0.28s"></span>
+                      </div>
+                    </div>
+
+                    <!-- Exact Spoken Opening Script (Transparent Disclosure) -->
+                    <p id="greeting-script-text" class="mt-2 pt-2 border-t border-spruce/10 font-serif italic text-[12.5px] text-ink leading-snug">
+                      "Namaste Priya! Main Asha bol rahi hoon, HappySmile Indiranagar ki AI scheduling assistant. Aapke dental implant enquiry ke liye 2 minute baat kar sakte hain?"
+                    </p>
+                  </div>
+                </div>
+
+                <!-- 3. "Tell Asha Before She Calls" Quick Personalization Chips -->
+                <div class="bg-white rounded-2xl p-3.5 border border-stoneLine shadow-editorial">
+                  <p class="text-[11.5px] font-bold text-ink">Tap anything on your mind <span class="font-normal text-ink-muted">(skips repeat questions)</span></p>
+                  <div class="mt-2 flex flex-wrap gap-1.5" id="s1-intent-chips">
+                    <button onclick="toggleIntentChip('emi', this)" data-chip="emi" class="intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/50 transition-all">
+                      Ask about EMI / cost
+                    </button>
+                    <button onclick="toggleIntentChip('pain', this)" data-chip="pain" class="intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/50 transition-all">
+                      Nervous about pain
+                    </button>
+                    <button onclick="toggleIntentChip('slot', this)" data-chip="slot" class="intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/50 transition-all">
+                      Evening / weekend slot
+                    </button>
+                    <button onclick="toggleIntentChip('urgent', this)" data-chip="urgent" class="intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-medium border border-stoneLine bg-ivory text-ink hover:border-coral/50 transition-all">
+                      Urgent toothache
+                    </button>
+                  </div>
+
+                  <!-- Dynamic Live Brief Feedback Note -->
+                  <div id="s1-chip-feedback" class="hidden mt-2.5 rounded-xl px-2.5 py-2 text-[11px] leading-snug flex items-start gap-2 animate-fade-in">
+                    <svg class="w-3.5 h-3.5 shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                    <span id="s1-chip-feedback-text">Added to Asha's brief for your call.</span>
+                  </div>
+                </div>
+
+                <!-- 4. Guilt-Free Channel & Human Escape Hatch (India-First UX) -->
+                <div class="pt-0.5 relative">
+                  <!-- Floating PM Pin #3 -->
+                  <button onclick="openRationaleModal('pin3')" class="pm-pin hidden absolute -top-1 right-0 w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #3">3</button>
+
+                  <p class="text-[11px] font-semibold text-ink-muted px-1 mb-2">Busy right now or prefer another way?</p>
+                  <div class="grid grid-cols-2 gap-2">
+                    <!-- Equal-Citizenship Card 1: WhatsApp -->
+                    <button onclick="switchPatientView('whatsapp')" class="group text-left bg-white hover:bg-wa-tint/60 border border-stoneLine hover:border-wa/40 rounded-2xl p-3 transition-all shadow-2xs flex flex-col justify-between gap-2">
+                      <div class="w-8 h-8 rounded-xl bg-wa-tint text-wa flex items-center justify-center">
+                        <!-- Crisp WhatsApp Vector Icon -->
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-[12px] font-bold text-ink group-hover:text-wa transition-colors leading-tight">Switch to WhatsApp</p>
+                        <p class="text-[10.5px] text-ink-muted mt-1 leading-snug">Get slots &amp; price range in 10 sec</p>
+                      </div>
+                    </button>
+
+                    <!-- Equal-Citizenship Card 2: Human Staff Callback -->
+                    <button onclick="switchPatientView('human')" class="group text-left bg-white hover:bg-coral-tint/60 border border-stoneLine hover:border-coral/40 rounded-2xl p-3 transition-all shadow-2xs flex flex-col justify-between gap-2">
+                      <div class="w-8 h-8 rounded-xl bg-coral-tint text-coral flex items-center justify-center">
+                        <!-- Crisp Headset / Coordinator Vector Icon -->
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <p class="text-[12px] font-bold text-ink group-hover:text-coral transition-colors leading-tight">Human Staff Call</p>
+                        <p class="text-[10.5px] text-ink-muted mt-1 leading-snug">Speak with Priya at Indiranagar desk</p>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- *************************************************************
+                   STATE 1B: SWITCHED TO WHATSAPP (INTERACTIVE CHAT PREVIEW)
+              ************************************************************** -->
+              <div id="s1-view-whatsapp" class="hidden flex-col gap-3 animate-fade-in">
+                <div class="bg-white rounded-2xl p-4 border border-wa/30 shadow-editorial">
+                  <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-2.5">
+                      <span class="w-9 h-9 rounded-full bg-wa-tint text-wa flex items-center justify-center">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                      </span>
+                      <div>
+                        <span class="inline-block text-[10px] font-bold uppercase tracking-wider text-wa">Automated Call Paused</span>
+                        <h3 class="text-[15px] font-bold text-ink leading-tight">Switched to WhatsApp</h3>
+                      </div>
+                    </div>
+                    <span class="text-[10px] font-mono bg-wa-tint text-wa px-2 py-0.5 rounded-full font-semibold">Sent 2s ago</span>
+                  </div>
+                  <p class="text-[11.5px] text-ink-muted mt-2 leading-relaxed">
+                    No phone call will ring. Reply on WhatsApp whenever you step out of your meeting.
+                  </p>
+
+                  <!-- Authentic WhatsApp Message Preview Container -->
+                  <div class="mt-3.5 rounded-2xl bg-[#EFEAE2] p-3 border border-stoneLine space-y-2">
+                    <div class="flex items-center justify-between text-[10px] text-ink-muted px-0.5">
+                      <span class="font-semibold text-ink flex items-center gap-1">
+                        HappySmile Verified
+                        <svg class="w-3 h-3 text-wa" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                      </span>
+                      <span class="font-mono">4:49 PM</span>
+                    </div>
+                    <div class="bg-white rounded-xl rounded-tl-sm p-2.5 shadow-2xs text-[11.5px] text-ink leading-relaxed">
+                      Hi Priya! Thanks for asking about <span class="font-semibold">Dental Implants</span> at Indiranagar. Typical single-tooth implants start at ₹28,000 with 0% EMI options.
+                      <p class="mt-1.5 text-ink-muted">Tap a consultation slot with Dr. Nair or ask any question:</p>
+                    </div>
+                    <!-- 1-Tap Interactive WhatsApp Slot Buttons -->
+                    <div class="grid grid-cols-2 gap-1.5 pt-0.5">
+                      <button onclick="selectWASlot('Sat, 11:30 AM', this)" class="wa-slot-btn bg-white hover:bg-wa-tint border border-stoneLine text-wa font-semibold text-[11px] py-2 px-2 rounded-xl transition-all shadow-2xs">
+                        Sat · 11:30 AM
+                      </button>
+                      <button onclick="selectWASlot('Sun, 10:30 AM', this)" class="wa-slot-btn bg-white hover:bg-wa-tint border border-stoneLine text-wa font-semibold text-[11px] py-2 px-2 rounded-xl transition-all shadow-2xs">
+                        Sun · 10:30 AM
+                      </button>
+                    </div>
+                    <div id="wa-reply-bubble" class="hidden bg-[#D9FDD3] rounded-xl rounded-tr-sm p-2 text-[11px] text-ink ml-8 shadow-2xs animate-fade-in">
+                      <span id="wa-reply-text"></span>
+                    </div>
+                  </div>
+
+                  <!-- Switch Back Link -->
+                  <div class="mt-4 pt-3 border-t border-stoneLine flex items-center justify-between">
+                    <button onclick="switchPatientView('call')" class="inline-flex items-center gap-1.5 text-xs font-semibold text-spruce hover:underline">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                      Back to Instant Call
+                    </button>
+                    <button onclick="switchPatientView('human')" class="text-[11px] font-medium text-ink-muted hover:text-ink">
+                      Prefer a human call?
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- *************************************************************
+                   STATE 1C: SCHEDULE HUMAN STAFF CALL (15-MIN WINDOWS)
+              ************************************************************** -->
+              <div id="s1-view-human" class="hidden flex-col gap-3 animate-fade-in">
+                <div class="bg-white rounded-2xl p-4 border border-coral/30 shadow-editorial">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-full bg-coral-tint text-coral flex items-center justify-center shrink-0">
+                      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                      </svg>
+                    </span>
+                    <div>
+                      <span class="text-[10px] font-bold uppercase tracking-wider text-coral">Zero Automated Calls</span>
+                      <h3 class="text-[15px] font-bold text-ink leading-tight">Speak with Priya at Indiranagar</h3>
+                    </div>
+                  </div>
+
+                  <p class="text-[11.5px] text-ink-muted mt-2.5 leading-relaxed">
+                    Pick a 15-minute window that works for you. Our senior front-desk coordinator will call you personally from <span class="font-mono text-ink">+91 80 4568 1200</span>.
+                  </p>
+
+                  <!-- 15-Min Callback Window Chips -->
+                  <div class="mt-3.5">
+                    <p class="text-[11px] font-semibold text-ink mb-2">Choose callback window:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                      <button onclick="selectHumanWindow('Today · 5:30 PM', this)" class="human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-semibold border-2 border-spruce bg-spruce-tint text-spruce transition-all text-left">
+                        <span class="block">Today · 5:30 PM</span>
+                        <span class="text-[10px] font-normal opacity-80">15-min window</span>
+                      </button>
+                      <button onclick="selectHumanWindow('Today · 7:00 PM', this)" class="human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/40 transition-all text-left">
+                        <span class="block">Today · 7:00 PM</span>
+                        <span class="text-[10px] font-normal text-ink-muted">Evening slot</span>
+                      </button>
+                      <button onclick="selectHumanWindow('Tomorrow · 10:30 AM', this)" class="human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/40 transition-all text-left">
+                        <span class="block">Tomorrow · 10:30 AM</span>
+                        <span class="text-[10px] font-normal text-ink-muted">Morning slot</span>
+                      </button>
+                      <button onclick="selectHumanWindow('Tomorrow · 12:00 PM', this)" class="human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/40 transition-all text-left">
+                        <span class="block">Tomorrow · 12:00 PM</span>
+                        <span class="text-[10px] font-normal text-ink-muted">Lunch break</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Live Confirmation Strip -->
+                  <div class="mt-3.5 rounded-xl bg-spruce-soft border border-spruce/20 p-3 flex items-start gap-2">
+                    <svg class="w-4 h-4 text-spruce shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                    <p id="human-window-confirmation" class="text-[11.5px] text-ink leading-snug">
+                      Confirmed: <span class="font-semibold text-spruce">Priya (Front Desk Lead)</span> will call you at <span class="font-semibold">Today · 5:30 PM</span>. AI assistant call cancelled.
+                    </p>
+                  </div>
+
+                  <!-- Switch Back Link -->
+                  <div class="mt-4 pt-3 border-t border-stoneLine flex items-center justify-between">
+                    <button onclick="switchPatientView('call')" class="inline-flex items-center gap-1.5 text-xs font-semibold text-spruce hover:underline">
+                      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                      Back to Instant Call
+                    </button>
+                    <button onclick="switchPatientView('whatsapp')" class="text-[11px] font-medium text-ink-muted hover:text-wa">
+                      Switch to WhatsApp
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Mobile Footer Trust Strip + iOS Home Indicator -->
+            <div class="bg-white/90 border-t border-stoneLine px-4 pt-2.5 pb-2 text-center mt-auto">
+              <p class="text-[10px] text-ink-muted flex items-center justify-center gap-1.5">
+                <svg class="w-3 h-3 text-spruce shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>No clinical advice over automated calls · Private &amp; DND compliant</span>
+              </p>
+              <div class="w-28 h-1 bg-ink/20 rounded-full mx-auto mt-2.5"></div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+
+      <!-- =====================================================================
+           SCREEN 2: WHAT HAPPYSMILE SEES AFTERWARDS (macOS DESKTOP FRAME)
+           "The Co-Pilot Handoff Desk — Built to Earn Staff Trust"
+      ====================================================================== -->
+      <section id="section-screen2" class="flex flex-col w-full min-w-0">
+        <!-- Editorial Caption Header -->
+        <div class="mb-3 flex flex-wrap items-end justify-between gap-2 px-1">
+          <div>
+            <p class="text-[10.5px] font-semibold uppercase tracking-[0.12em] text-spruce">Screen 2 · Front-Desk Co-Pilot</p>
+            <h2 class="text-[15px] font-bold text-ink tracking-tight mt-0.5">What HappySmile sees afterwards <span class="font-normal text-ink-muted">— Receptionist &amp; Front-Desk Lead Workspace</span></h2>
+          </div>
+          <span class="font-mono text-[10.5px] text-ink-muted bg-white border border-stoneLine px-2 py-0.5 rounded-md">Desktop Web · Click any lead or dial</span>
+        </div>
+
+        <!-- macOS Browser Window Frame -->
+        <div class="w-full bg-white rounded-[22px] border border-stoneLine shadow-device overflow-hidden flex flex-col">
+
+          <!-- Subtle macOS Browser Chrome -->
+          <div class="bg-[#F0EFE9] border-b border-stoneLine px-4 py-2 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#E5685D] border border-black/5"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#EBB64C] border border-black/5"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-[#5DBB5E] border border-black/5"></span>
+            </div>
+            <div class="flex-1 max-w-md mx-auto bg-white/90 border border-stoneLine rounded-lg px-3 py-1 flex items-center justify-center gap-1.5 text-[11px] font-mono text-ink-muted">
+              <svg class="w-3 h-3 text-spruce shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span class="truncate">desk.happysmile.in/indiranagar/concierge</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-1.5 text-[10.5px] text-ink-muted font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-wa"></span>
+              <span>Synced live</span>
+            </div>
+          </div>
+
+          <!-- 1. TOP CLINIC OPERATIONS BAR + AI AUTONOMY DIAL -->
+          <div class="bg-white border-b border-stoneLine px-4 sm:px-5 py-3 flex flex-wrap items-center justify-between gap-3 relative">
+            <!-- Left: Clinic Selector + Compact Daily Pulse -->
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative">
+                <select id="clinic-select" onchange="onClinicChange(this.value)" aria-label="Select HappySmile clinic" class="appearance-none bg-ivory hover:bg-[#EEECE4] border border-stoneLine rounded-xl pl-3 pr-8 py-1.5 text-xs font-bold text-ink cursor-pointer focus:outline-none focus:ring-2 focus:ring-spruce/20 focus:border-spruce transition-colors">
+                  <option value="Indiranagar Clinic">HappySmile · Indiranagar Clinic (1/12)</option>
+                  <option value="Koramangala Clinic">HappySmile · Koramangala Clinic (2/12)</option>
+                  <option value="Jayanagar Clinic">HappySmile · Jayanagar Clinic (3/12)</option>
+                  <option value="Bandra West, Mumbai">HappySmile · Bandra West, Mumbai (4/12)</option>
+                  <option value="Jubilee Hills, Hyderabad">HappySmile · Jubilee Hills, Hyderabad (5/12)</option>
+                </select>
+                <svg class="w-3.5 h-3.5 text-ink-muted absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+              </div>
+
+              <!-- Compact Daily Pulse -->
+              <div class="flex items-center gap-2 text-[11.5px] text-ink-muted bg-ivory/70 border border-stoneLine/80 rounded-xl px-3 py-1.5">
+                <span>Today: <strong class="font-mono text-ink">24</strong> enquiries</span>
+                <span class="text-stoneLine">·</span>
+                <span>Avg response: <strong class="font-mono text-spruce">48s</strong></span>
+              </div>
+            </div>
+
+            <!-- Right: OUT-OF-THE-BOX FEATURE — "AI Autonomy Dial" (Trust Control) -->
+            <div class="flex items-center gap-2.5 relative">
+              <!-- Floating PM Pin #4 -->
+              <button onclick="openRationaleModal('pin4')" class="pm-pin hidden -top-2.5 -right-2.5 absolute w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #4">4</button>
+
+              <span class="text-[10.5px] font-semibold uppercase tracking-wider text-ink-subtle hidden sm:inline">AI Autonomy:</span>
+              <div class="inline-flex items-center bg-ivory p-1 rounded-xl border border-stoneLine" role="radiogroup" aria-label="AI Autonomy Mode">
+                <button onclick="setAutonomyMode('shadow')" id="autonomy-shadow" class="autonomy-btn px-2.5 py-1 rounded-lg text-[11.5px] font-medium text-ink-muted hover:text-ink transition-all">
+                  Shadow
+                </button>
+                <button onclick="setAutonomyMode('copilot')" id="autonomy-copilot" class="autonomy-btn px-2.5 py-1 rounded-lg text-[11.5px] font-semibold bg-spruce text-white shadow-xs transition-all">
+                  Co-Pilot
+                </button>
+                <button onclick="setAutonomyMode('auto')" id="autonomy-auto" class="autonomy-btn px-2.5 py-1 rounded-lg text-[11.5px] font-medium text-ink-muted hover:text-ink transition-all">
+                  Auto
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic 1-Line Policy Banner Controlled by AI Autonomy Dial -->
+          <div id="autonomy-policy-bar" class="bg-spruce-soft border-b border-spruce/15 px-4 sm:px-5 py-2 flex items-center justify-between gap-2 text-[11.5px] text-spruce">
+            <div class="flex items-center gap-2 min-w-0">
+              <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/></svg>
+              <p id="autonomy-policy-text" class="truncate sm:whitespace-normal">
+                <strong class="font-semibold">Co-Pilot Active:</strong> Asha books routine checkups &amp; whitening; automatically hands off implants, pain, EMI questions &amp; anxious leads to your desk.
+              </p>
+            </div>
+            <span class="text-[10.5px] font-mono opacity-80 shrink-0 hidden md:inline">Set by Front-Desk Lead</span>
+          </div>
+
+          <!-- =================================================================
+               2-COLUMN OPERATIONAL WORKSPACE
+               Left: 3-Bucket Triage Queue (320px) · Right: 5-Sec Handoff Brief
+          ================================================================== -->
+          <div class="grid grid-cols-1 lg:grid-cols-[316px_minmax(0,1fr)] min-h-[670px] bg-ivory/40">
+
+            <!-- LEFT COLUMN: 3-BUCKET SMART TRIAGE QUEUE -->
+            <aside class="bg-white border-b lg:border-b-0 lg:border-r border-stoneLine flex flex-col">
+              <!-- Bucket Filter Tabs with Live Dynamic Counts -->
+              <div class="p-2.5 border-b border-stoneLine bg-ivory/60 space-y-1.5">
+                <button onclick="switchBucket('needs_human')" id="bucket-tab-needs_human" class="bucket-tab w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold bg-white text-ink border border-stoneLine shadow-2xs transition-all">
+                  <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-coral"></span>
+                    <span>Needs Human</span>
+                  </span>
+                  <span id="count-needs_human" class="font-mono text-[11px] px-1.5 py-0.5 rounded-md bg-coral-tint text-coral font-semibold">3</span>
+                </button>
+
+                <div class="grid grid-cols-2 gap-1.5">
+                  <button onclick="switchBucket('ai_booked')" id="bucket-tab-ai_booked" class="bucket-tab flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[11.5px] font-medium text-ink-muted hover:bg-white/80 border border-transparent transition-all">
+                    <span class="flex items-center gap-1.5 truncate">
+                      <span class="w-2 h-2 rounded-full bg-spruce shrink-0"></span>
+                      <span class="truncate">AI Booked</span>
+                    </span>
+                    <span id="count-ai_booked" class="font-mono text-[10.5px] px-1.5 py-0.5 rounded bg-spruce-tint text-spruce font-semibold">3</span>
+                  </button>
+
+                  <button onclick="switchBucket('whatsapp_rescue')" id="bucket-tab-whatsapp_rescue" class="bucket-tab flex items-center justify-between px-2.5 py-1.5 rounded-xl text-[11.5px] font-medium text-ink-muted hover:bg-white/80 border border-transparent transition-all">
+                    <span class="flex items-center gap-1.5 truncate">
+                      <span class="w-2 h-2 rounded-full bg-wa shrink-0"></span>
+                      <span class="truncate">WA / Rescue</span>
+                    </span>
+                    <span id="count-whatsapp_rescue" class="font-mono text-[10.5px] px-1.5 py-0.5 rounded bg-wa-tint text-wa font-semibold">2</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Queue Lead Items (Populated Dynamically) -->
+              <div id="triage-queue-list" class="divide-y divide-stoneLine/70 overflow-y-auto calm-scroll flex-1 max-h-[545px]">
+                <!-- Rendered by renderTriageQueue() -->
+              </div>
+
+              <!-- Queue Visibility Footer -->
+              <div class="px-3.5 py-2.5 bg-ivory/60 border-t border-stoneLine flex items-center justify-between text-[11px] text-ink-muted">
+                <span id="queue-status-caption">3 leads awaiting human touch</span>
+                <span class="font-semibold text-spruce">100% visible</span>
+              </div>
+            </aside>
+
+            <!-- RIGHT COLUMN: THE "5-SECOND WARM HANDOFF BRIEF" -->
+            <div id="handoff-brief-panel" class="p-4 sm:p-5 flex flex-col justify-between gap-4 overflow-y-auto">
+              <!-- Rendered dynamically by renderHandoffBrief() -->
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- =========================================================================
+       PM DESIGN RATIONALE MODAL / DRAWER (Opens when clicking pins or "View Full Matrix")
+  ========================================================================== -->
+  <div id="rationale-modal" class="hidden fixed inset-0 z-50 bg-ink/40 backdrop-blur-xs flex items-center justify-center p-4" onclick="closeRationaleModal(event)">
+    <div class="bg-white border border-stoneLine rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto calm-scroll shadow-device p-5 sm:p-6 animate-fade-in" onclick="event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3 pb-3.5 border-b border-stoneLine">
+        <div>
+          <span class="text-[10.5px] font-bold uppercase tracking-[0.12em] text-coral">PM Product Judgement</span>
+          <h3 id="modal-title" class="text-lg font-bold text-ink mt-0.5">How These 2 Screens Resolve All 3 Stakeholder Tensions</h3>
+        </div>
+        <button onclick="closeRationaleModal()" class="w-8 h-8 rounded-lg bg-ivory hover:bg-stoneLine/60 flex items-center justify-center text-ink-muted hover:text-ink transition-colors" aria-label="Close rationale">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div id="modal-body" class="mt-4 space-y-3">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       TOAST NOTIFICATION STACK (Zero browser alert()/confirm())
+  ========================================================================== -->
+  <div id="toast-stack" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none max-w-sm"></div>
+
+  <!-- =========================================================================
+       INTERACTIVE APPLICATION DATA & LOGIC
+  ========================================================================== -->
+  <script>
+    // -------------------------------------------------------------------------
+    // 1. SCREEN 1 LANGUAGE GREETING SCRIPTS (Polite AI Disclosure in 5 Languages)
+    // -------------------------------------------------------------------------
+    const GREETING_SCRIPTS = {
+      English: {
+        duration: '0:06',
+        text: '"Hello Priya! I\'m Asha, HappySmile Indiranagar\'s AI scheduling assistant. Calling about your dental implant enquiry — is now a good 2 minutes to check doctor slots?"'
+      },
+      Hinglish: {
+        duration: '0:07',
+        text: '"Namaste Priya! Main Asha bol rahi hoon, HappySmile Indiranagar ki AI scheduling assistant. Aapke dental implant enquiry ke liye 2 minute baat kar sakte hain?"'
+      },
+      Hindi: {
+        duration: '0:08',
+        text: '"नमस्ते प्रिया जी! मैं आशा बोल रही हूँ, HappySmile इंदिरानगर की AI शेड्यूलिंग असिस्टेंट। आपके डेंटल इम्प्लांट के लिए डॉक्टर स्लॉट देखने के लिए क्या 2 मिनट बात कर सकते हैं?"'
+      },
+      Kannada: {
+        duration: '0:07',
+        text: '"ನಮಸ್ಕಾರ ಪ್ರಿಯಾ! ನಾನು ಆಶಾ, HappySmile ಇಂದಿರಾನಗರದ AI ಶೆಡ್ಯೂಲಿಂಗ್ ಅಸಿಸ್ಟೆಂಟ್. ನಿಮ್ಮ ಡೆಂಟಲ್ ಇಂಪ್ಲಾಂಟ್ ಎನ್‌ಕ್ವೈರಿ ಬಗ್ಗೆ 2 ನಿಮಿಷ ಮಾತನಾಡಬಹುದೇ?"'
+      },
+      Tamil: {
+        duration: '0:07',
+        text: '"வணக்கம் பிரியா! நான் ஆஷா, HappySmile இந்திராநகரின் AI ஷெட்யூலிங் அசிஸ்டென்ட். உங்கள் டென்டல் இம்ப்ளான்ட் அப்பாயின்ட்மென்ட் பற்றி 2 நிமிடம் பேசலாமா?"'
+      }
+    };
+
+    // -------------------------------------------------------------------------
+    // 2. SCREEN 2 AUTHENTIC INDIAN DENTAL LEADS DATA (8 LEADS ACROSS 3 BUCKETS)
+    // -------------------------------------------------------------------------
+    const LEADS = [
+      // BUCKET 1: NEEDS HUMAN (3)
+      {
+        id: 'priya-menon',
+        bucket: 'needs_human',
+        name: 'Priya Menon',
+        phone: '+91 98450 41290',
+        clinic: 'Indiranagar',
+        treatment: 'Dental Implants',
+        language: 'Hinglish',
+        timeAgo: '2m ago',
+        queueSummary: 'Nervous about pain + asked for EMI breakdown',
+        queueMeta: 'Call 1m 42s · Hinglish',
+        signalLabel: 'Anxious about pain',
+        signalStyle: 'bg-coral-tint text-coral border-coral/25',
+        dotColor: 'bg-coral',
+        heroTitle: "Why You're Stepping In",
+        heroBullets: [
+          'High-intent single molar implant lead, but paused because she is nervous about procedural pain and wanted clarity on 0% EMI tenure.',
+          'Asha avoided clinical reassurances, placed a soft hold for Sat 11:30 AM with Dr. Nair, and promised a call from Indiranagar desk.'
+        ],
+        coveredPills: [
+          'Treatment: Single Tooth Implant',
+          'Preferred: Sat Morning',
+          'Concern: Pain & 6-mo EMI',
+          'Disclosed as AI: Yes'
+        ],
+        suggestedScript: '"Hi Priya, Asha from our team mentioned you\'re exploring a single implant and wanted clarity on painless options and 6-month EMI—I\'m calling from the Indiranagar desk to walk you through it and confirm Dr. Nair\'s Saturday 11:30 slot if you feel comfortable."',
+        guardrails: ['Disclosed as AI', 'No clinical advice given', 'No unapproved pricing quoted', 'Consent logged'],
+        audioDurationSec: 102,
+        audioDurationLabel: '1:42',
+        transcript: [
+          { id: 'pm-1', time: '0:03', speaker: 'Asha (AI)', isAI: true, text: 'Namaste Priya! Main Asha bol rahi hoon, HappySmile Indiranagar ki AI scheduling assistant. Aapke dental implant enquiry ke liye call kiya — kya 2 minute baat kar sakte hain?' },
+          { id: 'pm-2', time: '0:17', speaker: 'Priya', isAI: false, text: 'Haan boliye. Actually mujhe ek back tooth implant karwana hai, par mujhe pain se kaafi dar lagta hai. Kitna painful hota hai?' },
+          { id: 'pm-3', time: '0:33', speaker: 'Asha (AI)', isAI: true, text: 'Main bilkul samajh sakti hoon Priya. Pain management aur sedation options ke baare mein hamare senior coordinator ya Dr. Nair aapko accurately guide karenge. Kya aap Saturday morning free hain?' },
+          { id: 'pm-4', time: '0:54', speaker: 'Priya', isAI: false, text: 'Saturday 11:30 AM theek rahega, but pehle mujhe 6-month 0% EMI ka exact breakdown chahiye.' },
+          { id: 'pm-5', time: '1:12', speaker: 'Asha (AI)', isAI: true, text: 'Sure Priya! Maine Dr. Nair ke saath Sat 11:30 AM tentative hold kar diya hai. Hamari Indiranagar desk coordinator abhi aapko call karke painless options aur EMI details share karengi.' }
+        ]
+      },
+      {
+        id: 'vikram-shetty',
+        bucket: 'needs_human',
+        name: 'Vikram Shetty',
+        phone: '+91 97401 88312',
+        clinic: 'Indiranagar',
+        treatment: 'Severe Toothache / Root Canal',
+        language: 'Kannada',
+        timeAgo: '5m ago',
+        queueSummary: 'Swelling since morning — AI escalated immediately',
+        queueMeta: 'Call 0m 38s · Kannada',
+        signalLabel: 'Clinical Escalation',
+        signalStyle: 'bg-coral text-white border-coral',
+        dotColor: 'bg-coral',
+        heroTitle: "Why You're Stepping In (Urgent)",
+        heroBullets: [
+          'Patient reported acute throbbing pain and left cheek swelling since 8 AM and asked if he should take a painkiller before coming in.',
+          'Asha triggered immediate Clinical Safety Escalation, refused medication advice, and flagged today\'s 5:30 PM emergency buffer slot.'
+        ],
+        coveredPills: [
+          'Symptom: Pain + Cheek Swelling',
+          'Location: 10 mins from clinic',
+          'Asked for: Same-day emergency',
+          'Disclosed as AI: Yes'
+        ],
+        suggestedScript: '"Namaskara Vikram, I\'m calling right away from HappySmile Indiranagar desk — Asha flagged your toothache and swelling as urgent. Dr. Rao can see you in our 5:30 PM emergency slot today; can you make it in?"',
+        guardrails: ['Disclosed as AI', 'Refused medication advice', 'Immediate safety escalation', 'Consent logged'],
+        audioDurationSec: 38,
+        audioDurationLabel: '0:38',
+        transcript: [
+          { id: 'vs-1', time: '0:02', speaker: 'Asha (AI)', isAI: true, text: '[Kannada → EN] Namaskara Vikram! I am Asha, HappySmile Indiranagar\'s AI scheduling assistant calling about your root canal enquiry.' },
+          { id: 'vs-2', time: '0:12', speaker: 'Vikram', isAI: false, text: '[Kannada → EN] Hi, I have severe throbbing pain and swelling on my left cheek since morning. Should I take Combiflam before coming?' },
+          { id: 'vs-3', time: '0:22', speaker: 'Asha (AI)', isAI: true, text: '[Kannada → EN] I\'m very sorry you\'re in pain, Vikram. As an automated assistant I cannot suggest medicines, so I am immediately escalating this to our Indiranagar clinic desk to fit you into today\'s emergency slot.' }
+        ]
+      },
+      {
+        id: 'rohan-kulkarni',
+        bucket: 'needs_human',
+        name: 'Rohan Kulkarni',
+        phone: '+91 99012 73510',
+        clinic: 'Indiranagar',
+        treatment: 'Ceramic Braces',
+        language: 'English',
+        timeAgo: '9m ago',
+        queueSummary: 'Requested human staff on Screen 1 · Prefers 5:30 PM',
+        queueMeta: 'Web opt-out · English',
+        signalLabel: 'Requested Human',
+        signalStyle: 'bg-amberWarm-tint text-amberWarm border-amberWarm/25',
+        dotColor: 'bg-amberWarm',
+        heroTitle: "Why You're Stepping In",
+        heroBullets: [
+          'Patient tapped "Schedule a Human Staff Call" directly on the confirmation screen (0 AI calls placed; preference honoured).',
+          'Selected the 5:30 PM callback window and tapped pre-call chip "Evening / weekend slot" + "Ask about EMI / cost".'
+        ],
+        coveredPills: [
+          'Treatment: Ceramic Braces',
+          'Callback Window: Today 5:30 PM',
+          'Pre-call Note: Weekend slots & EMI',
+          'AI Call Suppressed: Yes'
+        ],
+        suggestedScript: '"Hi Rohan, this is Priya from HappySmile Indiranagar desk calling right at 5:30 as requested! I saw you\'re looking at ceramic braces with weekend appointments and EMI options — happy to share how our orthodontic plans work."',
+        guardrails: ['Human preference honoured', '0 AI calls made', 'No unapproved pricing quoted', 'Consent logged'],
+        audioDurationSec: 0,
+        audioDurationLabel: 'No AI Audio',
+        transcript: [
+          { id: 'rk-1', time: '4:40 PM', speaker: 'Patient (Web)', isAI: false, text: 'Submitted enquiry for Ceramic Braces at Indiranagar Clinic.' },
+          { id: 'rk-2', time: '4:40 PM', speaker: 'Patient (Web)', isAI: false, text: 'Selected quick chips: "Ask about EMI / cost", "Evening / weekend slot".' },
+          { id: 'rk-3', time: '4:41 PM', speaker: 'System Policy', isAI: true, text: 'Patient tapped "Schedule a Human Staff Call" → Window: Today 5:30 PM. Outbound AI voice call cancelled automatically.' }
+        ]
+      },
+
+      // BUCKET 2: AI BOOKED (3)
+      {
+        id: 'ananya-iyer',
+        bucket: 'ai_booked',
+        name: 'Ananya Iyer',
+        phone: '+91 98804 51209',
+        clinic: 'Indiranagar',
+        treatment: 'Teeth Whitening',
+        language: 'English',
+        timeAgo: '14m ago',
+        queueSummary: 'Booked Sat 11:30 AM (Dr. Nair) · WhatsApp confirmed',
+        queueMeta: 'Show-Up: High · 1m 14s',
+        signalLabel: 'Show-Up Confidence: High',
+        signalStyle: 'bg-spruce-tint text-spruce border-spruce/20',
+        dotColor: 'bg-spruce',
+        showUpLevel: 'High',
+        heroTitle: 'Booking & Show-Up Status',
+        heroBullets: [
+          'Booked cleanly for Saturday 11:30 AM with Dr. Nair (in-clinic laser whitening prior to a family wedding next week).',
+          'Patient tapped "Confirm" on the WhatsApp calendar invite and saved the Indiranagar Google Maps pin — no staff callback needed.'
+        ],
+        coveredPills: [
+          'Slot: Sat 11:30 AM · Dr. Nair',
+          'WhatsApp Confirmed: Yes',
+          'Duration: 45-min chair slot',
+          'Disclosed as AI: Yes'
+        ],
+        suggestedScript: '"(No call needed unless rescheduling) Hi Ananya, just confirming we\'re all set for your whitening session with Dr. Nair this Saturday at 11:30 AM at Indiranagar!"',
+        guardrails: ['Disclosed as AI', 'No clinical advice given', 'Approved price band shared', 'Consent logged'],
+        audioDurationSec: 74,
+        audioDurationLabel: '1:14',
+        transcript: [
+          { id: 'ai-1', time: '0:03', speaker: 'Asha (AI)', isAI: true, text: 'Hi Ananya! I\'m Asha, HappySmile Indiranagar\'s AI scheduling assistant calling about your teeth whitening enquiry.' },
+          { id: 'ai-2', time: '0:14', speaker: 'Ananya', isAI: false, text: 'Hey! Yes, I have a cousin\'s wedding next week. Do you have Saturday around 11:30?' },
+          { id: 'ai-3', time: '0:26', speaker: 'Asha (AI)', isAI: true, text: 'Dr. Nair has 11:30 AM open this Saturday. In-clinic whitening takes about 45 minutes and starts at ₹6,500. Shall I confirm it?' },
+          { id: 'ai-4', time: '0:42', speaker: 'Ananya', isAI: false, text: 'Yes please, lock it in and send me the location on WhatsApp.' },
+          { id: 'ai-5', time: '0:54', speaker: 'Asha (AI)', isAI: true, text: 'All set! You\'re confirmed for Sat 11:30 AM with Dr. Nair. I\'ve sent your WhatsApp confirmation and parking info.' }
+        ]
+      },
+      {
+        id: 'karthik-subramanian',
+        bucket: 'ai_booked',
+        name: 'Karthik Subramanian',
+        phone: '+91 96114 29018',
+        clinic: 'Indiranagar',
+        treatment: 'Routine Scaling & Checkup',
+        language: 'English',
+        timeAgo: '28m ago',
+        queueSummary: 'Booked Tomorrow 4:00 PM (Dr. Rao) · No WA reply yet',
+        queueMeta: 'Show-Up: Medium · 1m 05s',
+        signalLabel: 'Show-Up Risk: Medium',
+        signalStyle: 'bg-amberWarm-tint text-amberWarm border-amberWarm/30',
+        dotColor: 'bg-amberWarm',
+        showUpLevel: 'Medium',
+        heroTitle: 'Booking & Show-Up Status',
+        heroBullets: [
+          'Booked for Tomorrow 4:00 PM with Dr. Rao for routine scaling & annual checkup, synced directly to clinic calendar.',
+          'Show-Up Confidence is Medium because Karthik hasn\'t tapped confirm on WhatsApp yet — a 1-click reminder prevents a no-show.'
+        ],
+        coveredPills: [
+          'Slot: Tomorrow 4:00 PM · Dr. Rao',
+          'WhatsApp Reply: Pending',
+          'First-time Patient: Yes',
+          'Disclosed as AI: Yes'
+        ],
+        suggestedScript: '"Hi Karthik, calling quickly from HappySmile Indiranagar — Asha booked you with Dr. Rao tomorrow at 4:00 PM for scaling. Just checking that timing still works with your office schedule!"',
+        guardrails: ['Disclosed as AI', 'No clinical advice given', 'No unapproved pricing quoted', 'Consent logged'],
+        audioDurationSec: 65,
+        audioDurationLabel: '1:05',
+        transcript: [
+          { id: 'ks-1', time: '0:02', speaker: 'Asha (AI)', isAI: true, text: 'Hello Karthik! I\'m Asha, HappySmile Indiranagar\'s AI scheduling assistant regarding your routine checkup and scaling enquiry.' },
+          { id: 'ks-2', time: '0:15', speaker: 'Karthik', isAI: false, text: 'Oh great, can I come tomorrow afternoon around 4?' },
+          { id: 'ks-3', time: '0:27', speaker: 'Asha (AI)', isAI: true, text: 'Yes, Dr. Rao is available tomorrow at 4:00 PM. Should I confirm that appointment for you?' },
+          { id: 'ks-4', time: '0:40', speaker: 'Karthik', isAI: false, text: 'Yeah, sounds good. Thanks.' }
+        ]
+      },
+      {
+        id: 'meera-deshmukh',
+        bucket: 'ai_booked',
+        name: 'Meera Deshmukh',
+        phone: '+91 98207 64321',
+        clinic: 'Indiranagar',
+        treatment: 'Clear Aligners Consultation',
+        language: 'Hinglish',
+        timeAgo: '41m ago',
+        queueSummary: 'Booked Sun 10:00 AM (Dr. Nair) · Calendar added',
+        queueMeta: 'Show-Up: High · 1m 28s',
+        signalLabel: 'Show-Up Confidence: High',
+        signalStyle: 'bg-spruce-tint text-spruce border-spruce/20',
+        dotColor: 'bg-spruce',
+        showUpLevel: 'High',
+        heroTitle: 'Booking & Show-Up Status',
+        heroBullets: [
+          'Booked for Sunday 10:00 AM consultation with Dr. Nair for Clear Aligners; added calendar invite and pre-filled intake form.',
+          'AI confirmed basement parking availability and 3D digital scan consultation fee (₹500, adjustable against treatment).'
+        ],
+        coveredPills: [
+          'Slot: Sun 10:00 AM · Dr. Nair',
+          'Calendar Added: Yes',
+          'Asked: Parking & Scan Fee',
+          'Disclosed as AI: Yes'
+        ],
+        suggestedScript: '"(No call needed) Hi Meera, looking forward to welcoming you this Sunday at 10:00 AM for your clear aligners scan with Dr. Nair — free patient parking is in Basement 1."',
+        guardrails: ['Disclosed as AI', 'No clinical advice given', 'Approved consult fee quoted', 'Consent logged'],
+        audioDurationSec: 88,
+        audioDurationLabel: '1:28',
+        transcript: [
+          { id: 'md-1', time: '0:03', speaker: 'Asha (AI)', isAI: true, text: 'Namaste Meera! Main Asha bol rahi hoon, HappySmile Indiranagar ki AI scheduling assistant, aapke clear aligners enquiry ke liye.' },
+          { id: 'md-2', time: '0:19', speaker: 'Meera', isAI: false, text: 'Hi Asha, Sunday morning 10 baje Dr. Nair milengi? Aur car parking available hai?' },
+          { id: 'md-3', time: '0:34', speaker: 'Asha (AI)', isAI: true, text: 'Ji haan, Sunday 10:00 AM available hai aur building mein free patient basement parking hai. Consultation & 3D scan ₹500 hai — confirm kar doon?' },
+          { id: 'md-4', time: '0:52', speaker: 'Meera', isAI: false, text: 'Done, please book it!' }
+        ]
+      },
+
+      // BUCKET 3: WHATSAPP / RESCUE (2)
+      {
+        id: 'siddharth-verma',
+        bucket: 'whatsapp_rescue',
+        name: 'Siddharth Verma',
+        phone: '+91 98112 30945',
+        clinic: 'Indiranagar',
+        treatment: 'Invisible Braces',
+        language: 'English',
+        timeAgo: '3m ago',
+        queueSummary: 'At work — switched to WhatsApp · Viewed slots 3m ago',
+        queueMeta: 'WhatsApp active · English',
+        signalLabel: 'Ready to Book (Async)',
+        signalStyle: 'bg-wa-tint text-wa border-wa/25',
+        dotColor: 'bg-wa',
+        heroTitle: 'WhatsApp Concierge Status',
+        heroBullets: [
+          'Tapped "Switch to WhatsApp instead" on Screen 1 while at work; voice call was paused instantly so he wasn\'t disturbed.',
+          'Opened the Indiranagar slot list 3 mins ago and viewed Dr. Nair\'s Sunday afternoon availability — warm nudge can close the booking.'
+        ],
+        coveredPills: [
+          'Treatment: Invisible Braces',
+          'Channel: WhatsApp Preferred',
+          'Status: Viewed Sunday slots',
+          'Voice Call Paused: Yes'
+        ],
+        suggestedScript: '"Hi Siddharth, Priya here from HappySmile Indiranagar! Saw you were checking Sunday slots for Invisible Braces — happy to hold 4:00 PM for you or answer any quick questions right here on WhatsApp."',
+        guardrails: ['Voice call paused on request', 'WhatsApp opt-in verified', 'No unapproved pricing quoted', 'Human takeover ready'],
+        audioDurationSec: 0,
+        audioDurationLabel: 'WhatsApp Only',
+        transcript: [
+          { id: 'sv-1', time: '4:44 PM', speaker: 'Asha (WhatsApp)', isAI: true, text: 'Hi Siddharth! No rush at work — here are Dr. Nair\'s open Invisible Braces consultation slots at Indiranagar this weekend: Sat 4:30 PM or Sun 4:00 PM.' },
+          { id: 'sv-2', time: '4:46 PM', speaker: 'System Event', isAI: false, text: 'Patient read message and tapped "View Invisible Braces EMI & Duration FAQ".' }
+        ]
+      },
+      {
+        id: 'neha-agarwal',
+        bucket: 'whatsapp_rescue',
+        name: 'Neha Agarwal',
+        phone: '+91 98455 92104',
+        clinic: 'Indiranagar',
+        treatment: 'Smile Makeover',
+        language: 'Hinglish',
+        timeAgo: '19m ago',
+        queueSummary: 'Call declined (Busy) — Auto-sent WhatsApp · Replied!',
+        queueMeta: 'Rescued via WA · Hinglish',
+        signalLabel: 'Replied on WhatsApp',
+        signalStyle: 'bg-wa-tint text-wa border-wa/25',
+        dotColor: 'bg-wa',
+        heroTitle: 'Missed-Call Rescue Status',
+        heroBullets: [
+          'Initial 45s call was declined (Busy), so HappySmile automatically sent a polite 1-message WhatsApp intro instead of spam-redialing.',
+          'Lead rescued! Neha replied asking for Saturday post-2 PM availability and whether veneers consult takes more than 30 minutes.'
+        ],
+        coveredPills: [
+          'Treatment: Smile Makeover / Veneers',
+          'Call Outcome: Declined (1 try max)',
+          'WA Reply: Wants Sat after 2 PM',
+          'Auto-Redial Suppressed: Yes'
+        ],
+        suggestedScript: '"Hi Neha, Priya here from HappySmile Indiranagar! Thanks for replying — a smile makeover consult takes ~30 mins, and Dr. Nair has 3:00 PM open this Saturday. Shall I block it for you?"',
+        guardrails: ['Max-1-call-when-declined rule', 'Instant WhatsApp rescue', 'No clinical advice given', 'Consent logged'],
+        audioDurationSec: 0,
+        audioDurationLabel: 'WhatsApp Rescue',
+        transcript: [
+          { id: 'na-1', time: '4:28 PM', speaker: 'System Event', isAI: false, text: 'Outbound call (+91 80 4568 1200) declined by user after 8s. Switched automatically to WhatsApp rescue.' },
+          { id: 'na-2', time: '4:29 PM', speaker: 'Asha (WhatsApp)', isAI: true, text: 'Hi Neha, sorry we caught you at a busy moment! You enquired about Smile Makeover at HappySmile Indiranagar. Reply anytime here with a convenient day or if you prefer a later call.' },
+          { id: 'na-3', time: '4:35 PM', speaker: 'Neha', isAI: false, text: 'Thanks! Do you have anything Saturday after 2 PM? Also how long does the first consult take?' }
+        ]
+      }
+    ];
+
+    // -------------------------------------------------------------------------
+    // 3. PM DESIGN RATIONALE CONTENT (MAPS DIRECTLY TO STAKEHOLDER TENSIONS)
+    // -------------------------------------------------------------------------
+    const PM_RATIONALES = {
+      pin1: {
+        num: '1',
+        title: 'Anti-Spam Caller ID + Radical AI Transparency',
+        resolves: "Resolves Founder's \"Sound So Human\" Trap + Ops Head's Answer-Rate Bottleneck",
+        body: 'Pretending to be human breaks healthcare trust the instant a patient notices latency or asks a clinical question. Instead, Asha introduces herself honestly as HappySmile\'s AI scheduling assistant while displaying a verified caller ID (+91 80 4568 1200) so Indian patients don\'t reject the 45-second call as spam.'
+      },
+      pin2: {
+        num: '2',
+        title: 'Indian Language Selector + Pre-Call Voice Preview',
+        resolves: 'Eliminates Uncanny-Valley Shock & First-10-Second Hang-Ups',
+        body: 'Patients across Bengaluru, Mumbai, and metro India switch fluidly between English, Hinglish, and regional languages. Letting them pick their language and optionally preview Asha\'s warm 7-second greeting removes surprise and boosts call completion.'
+      },
+      pin3: {
+        num: '3',
+        title: 'Equal-Citizenship WhatsApp & Human Escape Hatches',
+        resolves: "Challenges the Ops Head's Voice-Only Assumption",
+        body: 'Calling everyone in 5 minutes fails when people enquire during office hours or commutes. Giving guilt-free 1-tap switches to WhatsApp or a scheduled human coordinator call recovers the ~70% of leads that voice-only dialing loses—without hurting brand goodwill.'
+      },
+      pin4: {
+        num: '4',
+        title: 'The "AI Autonomy Dial" (Shadow → Co-Pilot → Auto)',
+        resolves: "Solves Front-Desk Lead's Resistance (\"I don't trust a bot with patients\")",
+        body: 'Rather than forcing a big-bang launch, the Front-Desk Lead controls AI permissions per clinic. Start in Shadow mode (week 1), move to Co-Pilot (AI handles routine whitening/checkups while escalating implants, pain & EMI), and only enable Auto once staff verify quality.'
+      },
+      pin5: {
+        num: '5',
+        title: '5-Second Handoff Brief + Suggested Opening Line',
+        resolves: 'Respects Busy Clinic Reality (~25 Leads/Day Amid Walk-Ins)',
+        body: 'Receptionists cannot listen to 2-minute recordings between walk-ins. "Already Covered — Don\'t Re-Ask" pills plus a 1-click copyable human opening script let staff pick up right where Asha left off—making HappySmile feel seamless and deeply human.'
+      },
+      pin6: {
+        num: '6',
+        title: 'Clinical Guardrails + Per-Utterance QA Flagging',
+        resolves: 'Turns Skeptical Staff into Quality Owners & Protects Clinical Safety',
+        body: 'Every lead displays verifiable proof that Asha disclosed herself and refused clinical/medication advice. Giving staff a 1-click "Flag issue" button on individual AI lines transforms front-desk skepticism into a rapid QA feedback loop.'
+      }
+    };
+
+    // -------------------------------------------------------------------------
+    // 4. APPLICATION STATE
+    // -------------------------------------------------------------------------
+    let viewMode = 'both';
+    let pmRationaleOn = false;
+
+    // Screen 1 State
+    let s1View = 'call'; // 'call' | 'whatsapp' | 'human'
+    let countdownSec = 42;
+    let countdownPaused = false;
+    let countdownTimer = null;
+    let selectedPatientLang = 'Hinglish';
+    let greetingPlaying = false;
+    let greetingTimer = null;
+    let selectedIntentChips = new Set();
+
+    // Screen 2 State
+    let autonomyMode = 'copilot'; // 'shadow' | 'copilot' | 'auto'
+    let activeBucket = 'needs_human';
+    let selectedLeadId = 'priya-menon';
+    let drawerExpanded = true;
+    let audioPlaying = false;
+    let audioPos = 22;
+    let audioSpeed = 1;
+    let audioTimer = null;
+    let activeFlagLineId = null; // utterance id or 'overall'
+    let flaggedLines = new Set();
+    let callLogOpenFor = null; // leadId when simulated call is active
+    let leadActionStates = {}; // e.g. { 'priya-menon': 'Called · Slot Confirmed' }
+
+    // -------------------------------------------------------------------------
+    // 5. TOP HEADER CONTROLS (VIEW SWITCHER & PM RATIONALE TOGGLE)
+    // -------------------------------------------------------------------------
+    function setViewMode(mode) {
+      viewMode = mode;
+      const grid = document.getElementById('prototype-grid');
+      const s1 = document.getElementById('section-screen1');
+      const s2 = document.getElementById('section-screen2');
+
+      document.querySelectorAll('.view-switch-btn').forEach(btn => {
+        btn.className = 'view-switch-btn px-3 py-1.5 rounded-lg text-xs font-medium transition-all text-ink-muted hover:text-ink';
+      });
+      const activeBtn = document.getElementById(`view-btn-${mode}`);
+      activeBtn.className = 'view-switch-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-white text-spruce shadow-xs ring-1 ring-stoneLine';
+
+      if (mode === 'screen1') {
+        s1.classList.remove('hidden');
+        s2.classList.add('hidden');
+        grid.className = 'flex justify-center';
+      } else if (mode === 'screen2') {
+        s1.classList.add('hidden');
+        s2.classList.remove('hidden');
+        grid.className = 'max-w-[1160px] mx-auto w-full';
+      } else {
+        s1.classList.remove('hidden');
+        s2.classList.remove('hidden');
+        grid.className = 'grid grid-cols-1 xl:grid-cols-[412px_minmax(0,1fr)] gap-7 items-start';
+      }
+    }
+
+    function togglePMRationale() {
+      pmRationaleOn = !pmRationaleOn;
+      const btn = document.getElementById('pm-toggle-btn');
+      const track = document.getElementById('pm-toggle-track');
+      const thumb = document.getElementById('pm-toggle-thumb');
+      const banner = document.getElementById('pm-rationale-banner');
+
+      btn.setAttribute('aria-checked', String(pmRationaleOn));
+      if (pmRationaleOn) {
+        track.classList.replace('bg-[#D7D4CA]', 'bg-coral');
+        thumb.classList.replace('translate-x-1', 'translate-x-4.5');
+        thumb.style.transform = 'translateX(18px)';
+        banner.classList.remove('hidden');
+      } else {
+        track.classList.replace('bg-coral', 'bg-[#D7D4CA]');
+        thumb.style.transform = 'translateX(4px)';
+        banner.classList.add('hidden');
+      }
+
+      document.querySelectorAll('.pm-pin').forEach(pin => {
+        pin.classList.toggle('hidden', !pmRationaleOn);
+      });
+    }
+
+    function openRationaleModal(pinKey) {
+      const modal = document.getElementById('rationale-modal');
+      const titleEl = document.getElementById('modal-title');
+      const bodyEl = document.getElementById('modal-body');
+
+      if (pinKey === 'all') {
+        titleEl.textContent = 'PM Design Rationale — Resolving All 3 Stakeholder Tensions';
+        bodyEl.innerHTML = Object.values(PM_RATIONALES).map(r => renderRationaleCard(r, false)).join('');
+      } else {
+        const item = PM_RATIONALES[pinKey];
+        if (!item) return;
+        titleEl.textContent = `Decision #${item.num}: ${item.title}`;
+        bodyEl.innerHTML = renderRationaleCard(item, true) + `
+          <div class="pt-2 border-t border-stoneLine flex items-center justify-between">
+            <span class="text-xs text-ink-muted">Explore all 6 product judgements across both screens</span>
+            <button onclick="openRationaleModal('all')" class="text-xs font-semibold text-spruce hover:underline">View Full Matrix →</button>
+          </div>
+        `;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function renderRationaleCard(r, featured) {
+      return `
+        <div class="rounded-xl p-3.5 border ${featured ? 'border-coral/30 bg-coral-tint/40' : 'border-stoneLine bg-ivory/60'}">
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-coral text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">${r.num}</span>
+            <div>
+              <h4 class="text-sm font-bold text-ink">${r.title}</h4>
+              <p class="text-[11px] font-semibold text-spruce mt-0.5">${r.resolves}</p>
+              <p class="text-xs text-ink-muted mt-1.5 leading-relaxed">${r.body}</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closeRationaleModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('rationale-modal').classList.add('hidden');
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. SCREEN 1 INTERACTIONS (COUNTDOWN, LANGUAGE, CHIPS, ESCAPE HATCHES)
+    // -------------------------------------------------------------------------
+    function startS1Countdown() {
+      clearInterval(countdownTimer);
+      renderCountdown();
+      countdownTimer = setInterval(() => {
+        if (s1View !== 'call' || countdownPaused) return;
+        if (countdownSec > 0) {
+          countdownSec--;
+          renderCountdown();
+        } else {
+          clearInterval(countdownTimer);
+          renderCountdown();
+        }
+      }, 1000);
+    }
+
+    function renderCountdown() {
+      const headline = document.getElementById('s1-timer-headline');
+      const kicker = document.getElementById('s1-timer-kicker');
+      const pauseBtn = document.getElementById('s1-pause-btn');
+      const callNowBtn = document.getElementById('s1-callnow-btn');
+      const ring = document.getElementById('s1-beacon-ring');
+
+      if (countdownSec > 0) {
+        const formatted = `00:${String(countdownSec).padStart(2, '0')}`;
+        kicker.textContent = countdownPaused ? 'Callback Paused' : 'Instant Callback Ready';
+        headline.innerHTML = `We're calling you in <span id="s1-countdown" class="font-mono text-spruce tabular-nums">${formatted}</span>`;
+        pauseBtn.textContent = countdownPaused ? 'Resume' : 'Pause';
+        callNowBtn.textContent = 'Call Now';
+        ring.classList.toggle('hidden', countdownPaused);
+      } else {
+        kicker.textContent = 'Live Outbound Call';
+        headline.innerHTML = `<span class="text-spruce">Asha is ringing your phone...</span>`;
+        pauseBtn.textContent = 'Reset';
+        callNowBtn.textContent = 'Connected';
+        ring.classList.remove('hidden');
+      }
+    }
+
+    function toggleCountdownPause() {
+      if (countdownSec === 0) {
+        countdownSec = 42;
+        countdownPaused = false;
+        startS1Countdown();
+        showToast('42-second callback countdown restarted');
+        return;
+      }
+      countdownPaused = !countdownPaused;
+      renderCountdown();
+      showToast(countdownPaused ? 'Callback countdown paused — take your time' : 'Callback countdown resumed');
+    }
+
+    function triggerCallNow() {
+      countdownSec = 0;
+      countdownPaused = false;
+      clearInterval(countdownTimer);
+      renderCountdown();
+      showToast('Initiating instant call from +91 80 4568 1200 (Asha AI)');
+    }
+
+    function selectPatientLang(lang) {
+      selectedPatientLang = lang;
+      document.querySelectorAll('.plang-pill').forEach(pill => {
+        const active = pill.dataset.plang === lang;
+        pill.className = active
+          ? 'plang-pill px-2.5 py-1 rounded-full text-[11px] font-semibold border border-spruce bg-spruce text-white shadow-2xs transition-all'
+          : 'plang-pill px-2.5 py-1 rounded-full text-[11px] font-medium border border-stoneLine bg-ivory text-ink-muted hover:text-ink transition-all';
+      });
+      const script = GREETING_SCRIPTS[lang];
+      document.getElementById('greeting-script-text').textContent = script.text;
+      stopGreetingPreview();
+      document.getElementById('greeting-play-status').textContent = `Tap to preview · ${script.duration}`;
+      showToast(`Asha's call language set to ${lang}`);
+    }
+
+    function toggleGreetingPreview() {
+      if (greetingPlaying) {
+        stopGreetingPreview();
+      } else {
+        greetingPlaying = true;
+        const script = GREETING_SCRIPTS[selectedPatientLang];
+        document.getElementById('greeting-play-status').textContent = `Playing ${selectedPatientLang} sample...`;
+        document.getElementById('greeting-play-icon').innerHTML = `
+          <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
+        `;
+        document.querySelectorAll('.greeting-eq').forEach(b => b.classList.add('active'));
+        clearTimeout(greetingTimer);
+        greetingTimer = setTimeout(() => {
+          stopGreetingPreview();
+        }, 5500);
+      }
+    }
+
+    function stopGreetingPreview() {
+      greetingPlaying = false;
+      clearTimeout(greetingTimer);
+      const script = GREETING_SCRIPTS[selectedPatientLang];
+      document.getElementById('greeting-play-status').textContent = `Tap to preview · ${script.duration}`;
+      document.getElementById('greeting-play-icon').innerHTML = `
+        <svg class="w-3 h-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+      `;
+      document.querySelectorAll('.greeting-eq').forEach(b => b.classList.remove('active'));
+    }
+
+    function toggleIntentChip(key, el) {
+      if (selectedIntentChips.has(key)) {
+        selectedIntentChips.delete(key);
+        el.className = 'intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/50 transition-all';
+      } else {
+        selectedIntentChips.add(key);
+        const isEscalation = key === 'urgent' || key === 'pain';
+        el.className = isEscalation
+          ? 'intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border border-coral bg-coral-tint text-coral transition-all'
+          : 'intent-chip px-2.5 py-1.5 rounded-xl text-[11px] font-semibold border border-spruce bg-spruce-tint text-spruce transition-all';
+      }
+
+      const feedbackBox = document.getElementById('s1-chip-feedback');
+      const feedbackText = document.getElementById('s1-chip-feedback-text');
+      if (selectedIntentChips.size === 0) {
+        feedbackBox.classList.add('hidden');
+      } else {
+        feedbackBox.classList.remove('hidden');
+        const needsSeniorDesk = selectedIntentChips.has('urgent') || selectedIntentChips.has('pain');
+        if (needsSeniorDesk) {
+          feedbackBox.className = 'mt-2.5 rounded-xl px-2.5 py-2 text-[11px] leading-snug flex items-start gap-2 bg-coral-tint text-coral border border-coral/20 animate-fade-in';
+          feedbackText.textContent = 'Noted — Asha will prioritize connecting you directly to our senior clinic coordinator.';
+        } else {
+          feedbackBox.className = 'mt-2.5 rounded-xl px-2.5 py-2 text-[11px] leading-snug flex items-start gap-2 bg-spruce-soft text-spruce border border-spruce/20 animate-fade-in';
+          feedbackText.textContent = "Added to Asha's brief for your call — you won't need to repeat this.";
+        }
+      }
+    }
+
+    function switchPatientView(target) {
+      s1View = target;
+      stopGreetingPreview();
+      document.getElementById('s1-view-call').classList.toggle('hidden', target !== 'call');
+      document.getElementById('s1-view-whatsapp').classList.toggle('hidden', target !== 'whatsapp');
+      document.getElementById('s1-view-human').classList.toggle('hidden', target !== 'human');
+
+      if (target === 'call') {
+        if (countdownSec === 0) countdownSec = 42;
+        countdownPaused = false;
+        startS1Countdown();
+      } else if (target === 'whatsapp') {
+        showToast('Outbound call paused · Instant WhatsApp preview sent');
+      } else if (target === 'human') {
+        showToast('AI call cancelled · Choose your human callback window');
+      }
+    }
+
+    function selectWASlot(slotText, btn) {
+      document.querySelectorAll('.wa-slot-btn').forEach(b => {
+        b.className = 'wa-slot-btn bg-white hover:bg-wa-tint border border-stoneLine text-wa font-semibold text-[11px] py-2 px-2 rounded-xl transition-all shadow-2xs';
+      });
+      btn.className = 'wa-slot-btn bg-wa text-white border border-wa font-semibold text-[11px] py-2 px-2 rounded-xl transition-all shadow-2xs';
+      const reply = document.getElementById('wa-reply-bubble');
+      document.getElementById('wa-reply-text').textContent = `You selected "${slotText}" — Dr. Nair's Indiranagar slot is reserved!`;
+      reply.classList.remove('hidden');
+      showToast(`WhatsApp slot reserved: ${slotText}`);
+    }
+
+    function selectHumanWindow(windowLabel, btn) {
+      document.querySelectorAll('.human-win-btn').forEach(b => {
+        b.className = 'human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-medium border border-stoneLine bg-ivory text-ink hover:border-spruce/40 transition-all text-left';
+      });
+      btn.className = 'human-win-btn px-3 py-2.5 rounded-xl text-[11.5px] font-semibold border-2 border-spruce bg-spruce-tint text-spruce transition-all text-left';
+      document.getElementById('human-window-confirmation').innerHTML = `
+        Confirmed: <span class="font-semibold text-spruce">Priya (Front Desk Lead)</span> will call you at <span class="font-semibold">${windowLabel}</span>. AI assistant call cancelled.
+      `;
+      showToast(`Human callback confirmed for ${windowLabel}`);
+    }
+
+    // -------------------------------------------------------------------------
+    // 7. SCREEN 2 INTERACTIONS (AUTONOMY DIAL, QUEUE, BRIEF, AUDIO, QA LOOP)
+    // -------------------------------------------------------------------------
+    function onClinicChange(clinic) {
+      showToast(`Switched desk view to HappySmile · ${clinic}`);
+    }
+
+    function setAutonomyMode(mode) {
+      autonomyMode = mode;
+      ['shadow', 'copilot', 'auto'].forEach(m => {
+        const el = document.getElementById(`autonomy-${m}`);
+        el.className = m === mode
+          ? 'autonomy-btn px-2.5 py-1 rounded-lg text-[11.5px] font-semibold bg-spruce text-white shadow-xs transition-all'
+          : 'autonomy-btn px-2.5 py-1 rounded-lg text-[11.5px] font-medium text-ink-muted hover:text-ink transition-all';
+      });
+
+      const bar = document.getElementById('autonomy-policy-bar');
+      const text = document.getElementById('autonomy-policy-text');
+
+      if (mode === 'shadow') {
+        bar.className = 'bg-amberWarm-tint border-b border-amberWarm/20 px-4 sm:px-5 py-2 flex items-center justify-between gap-2 text-[11.5px] text-amberWarm';
+        text.innerHTML = `<strong class="font-semibold">Shadow Mode Active (Week 1 Rollout):</strong> Asha answers within 48s &amp; qualifies every lead, but places soft holds only — staff confirms 100% of appointments.`;
+        showToast('AI Autonomy set to Shadow — staff confirms every slot');
+      } else if (mode === 'copilot') {
+        bar.className = 'bg-spruce-soft border-b border-spruce/15 px-4 sm:px-5 py-2 flex items-center justify-between gap-2 text-[11.5px] text-spruce';
+        text.innerHTML = `<strong class="font-semibold">Co-Pilot Active:</strong> Asha books routine checkups &amp; whitening; automatically hands off implants, pain, EMI questions &amp; anxious leads to your desk.`;
+        showToast('AI Autonomy set to Co-Pilot — balanced triage active');
+      } else {
+        bar.className = 'bg-[#EDF5F9] border-b border-[#C8DEE9] px-4 sm:px-5 py-2 flex items-center justify-between gap-2 text-[11.5px] text-[#17516B]';
+        text.innerHTML = `<strong class="font-semibold">Auto Mode Active:</strong> Asha confirms all standard slots across all treatments; clinical pain &amp; explicit human requests still escalate immediately.`;
+        showToast('AI Autonomy set to Auto — safety escalations remain locked ON');
+      }
+    }
+
+    function switchBucket(bucketKey) {
+      activeBucket = bucketKey;
+      stopAudioPlayer();
+      activeFlagLineId = null;
+      callLogOpenFor = null;
+
+      // Style active tab
+      const buckets = ['needs_human', 'ai_booked', 'whatsapp_rescue'];
+      buckets.forEach(b => {
+        const el = document.getElementById(`bucket-tab-${b}`);
+        if (b === bucketKey) {
+          el.classList.add('bg-white', 'text-ink', 'font-bold', 'border-stoneLine', 'shadow-2xs');
+          el.classList.remove('text-ink-muted', 'font-medium', 'border-transparent');
+        } else {
+          el.classList.remove('bg-white', 'text-ink', 'font-bold', 'border-stoneLine', 'shadow-2xs');
+          el.classList.add('text-ink-muted', 'font-medium', 'border-transparent');
+        }
+      });
+
+      const list = LEADS.filter(l => l.bucket === bucketKey);
+      if (list.length > 0) {
+        selectedLeadId = list[0].id;
+      }
+
+      renderTriageQueue();
+      renderHandoffBrief();
+    }
+
+    function selectLead(id) {
+      selectedLeadId = id;
+      stopAudioPlayer();
+      audioPos = 0;
+      activeFlagLineId = null;
+      callLogOpenFor = null;
+      renderTriageQueue();
+      renderHandoffBrief();
+    }
+
+    function updateBucketCounts() {
+      document.getElementById('count-needs_human').textContent = LEADS.filter(l => l.bucket === 'needs_human').length;
+      document.getElementById('count-ai_booked').textContent = LEADS.filter(l => l.bucket === 'ai_booked').length;
+      document.getElementById('count-whatsapp_rescue').textContent = LEADS.filter(l => l.bucket === 'whatsapp_rescue').length;
+    }
+
+    function renderTriageQueue() {
+      updateBucketCounts();
+      const container = document.getElementById('triage-queue-list');
+      const caption = document.getElementById('queue-status-caption');
+      const items = LEADS.filter(l => l.bucket === activeBucket);
+
+      if (activeBucket === 'needs_human') {
+        caption.textContent = `${items.length} leads awaiting human touch`;
+      } else if (activeBucket === 'ai_booked') {
+        caption.textContent = `${items.length} slots booked cleanly by Asha`;
+      } else {
+        caption.textContent = `${items.length} leads active on WhatsApp`;
+      }
+
+      container.innerHTML = items.map(lead => {
+        const isSelected = lead.id === selectedLeadId;
+        const customStatus = leadActionStates[lead.id];
+        return `
+          <button onclick="selectLead('${lead.id}')" class="w-full text-left px-3.5 py-3 transition-all border-l-[3px] ${isSelected ? 'bg-spruce-soft border-l-spruce' : 'bg-white hover:bg-ivory/60 border-l-transparent'}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-2 h-2 rounded-full ${lead.dotColor} shrink-0"></span>
+                <p class="text-[13px] font-bold text-ink truncate">${lead.name}</p>
+              </div>
+              <span class="font-mono text-[10px] text-ink-subtle shrink-0 mt-0.5">${lead.timeAgo}</span>
+            </div>
+            <div class="mt-1 flex items-center gap-1.5">
+              <span class="inline-block text-[10.5px] font-semibold px-2 py-0.5 rounded-md bg-ivory border border-stoneLine text-ink truncate">${lead.treatment}</span>
+              ${customStatus ? `<span class="text-[9.5px] font-semibold px-1.5 py-0.5 rounded bg-wa-tint text-wa shrink-0">${customStatus}</span>` : ''}
+            </div>
+            <p class="text-[11.5px] text-ink-muted mt-1.5 leading-snug line-clamp-2">${lead.queueSummary}</p>
+            <p class="text-[10.5px] font-mono text-ink-subtle mt-1">${lead.queueMeta}</p>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderHandoffBrief() {
+      const lead = LEADS.find(l => l.id === selectedLeadId) || LEADS[0];
+      if (!lead) return;
+
+      const panel = document.getElementById('handoff-brief-panel');
+      const pinVis = pmRationaleOn ? '' : 'hidden';
+      const statusBadge = leadActionStates[lead.id];
+
+      // Context-aware primary action bar
+      let actionButtonsHTML = '';
+      if (lead.bucket === 'needs_human') {
+        actionButtonsHTML = `
+          <button onclick="openCallLogger('${lead.id}')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-spruce hover:bg-spruce-dark text-white text-xs font-semibold shadow-xs transition-all">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            Call ${lead.name.split(' ')[0]} Now
+          </button>
+          <button onclick="triggerQuickAction('${lead.id}', 'WA Info Sent', 'Sent treatment & EMI guide to ${lead.name} on WhatsApp')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-wa-tint/60 border border-stoneLine text-ink text-xs font-semibold transition-all">
+            <svg class="w-3.5 h-3.5 text-wa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Send WhatsApp Info
+          </button>
+          <button onclick="triggerQuickAction('${lead.id}', 'Assigned Dr. Coord', 'Assigned ${lead.name} to Senior Doctor Coordinator')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-ivory border border-stoneLine text-ink-muted hover:text-ink text-xs font-semibold transition-all">
+            Assign to Dr. Coordinator
+          </button>
+        `;
+      } else if (lead.bucket === 'ai_booked') {
+        actionButtonsHTML = `
+          <button onclick="triggerQuickAction('${lead.id}', 'Verified ✓', 'Slot verified & locked on Indiranagar clinic calendar')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-spruce hover:bg-spruce-dark text-white text-xs font-semibold shadow-xs transition-all">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+            Confirm &amp; Keep Slot
+          </button>
+          <button onclick="upgradeShowUpConfidence('${lead.id}')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-wa-tint/60 border border-stoneLine text-ink text-xs font-semibold transition-all">
+            <svg class="w-3.5 h-3.5 text-wa" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Send WhatsApp Reminder
+          </button>
+          <button onclick="triggerQuickAction('${lead.id}', 'Reschedule Sent', 'Sent 1-tap reschedule slots to ${lead.name}')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-ivory border border-stoneLine text-ink-muted hover:text-ink text-xs font-semibold transition-all">
+            Reschedule
+          </button>
+        `;
+      } else {
+        actionButtonsHTML = `
+          <button onclick="triggerQuickAction('${lead.id}', 'Human on WA', 'You took over WhatsApp thread with ${lead.name} — Asha bot paused')" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-wa hover:bg-[#177340] text-white text-xs font-semibold shadow-xs transition-all">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+            Take Over WhatsApp Chat
+          </button>
+          <button onclick="triggerQuickAction('${lead.id}', 'Callback Set', 'Scheduled human callback for ${lead.name} at 6:00 PM')" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-ivory border border-stoneLine text-ink text-xs font-semibold transition-all">
+            Schedule Callback
+          </button>
+        `;
+      }
+
+      // Simulated Active Call Logger Strip (when "Call Now" clicked)
+      const callLoggerHTML = callLogOpenFor === lead.id ? `
+        <div class="rounded-xl bg-[#182421] text-white p-3.5 flex flex-wrap items-center justify-between gap-3 animate-fade-in">
+          <div class="flex items-center gap-2.5">
+            <span class="w-2.5 h-2.5 rounded-full bg-[#4ADE80] animate-pulse"></span>
+            <div>
+              <p class="text-xs font-semibold">Calling ${lead.name} (${lead.phone}) via Clinic Desk...</p>
+              <p class="text-[11px] text-white/70">Log outcome when done to update HappySmile calendar</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <button onclick="completeStaffCall('${lead.id}', 'booked')" class="px-3 py-1.5 rounded-lg bg-spruce-light hover:bg-spruce text-white text-[11px] font-semibold transition-colors">
+              Mark Booked ✓
+            </button>
+            <button onclick="completeStaffCall('${lead.id}', 'followup')" class="px-2.5 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-[11px] font-medium transition-colors">
+              Log Callback
+            </button>
+          </div>
+        </div>
+      ` : '';
+
+      panel.innerHTML = `
+        <div class="space-y-3.5">
+
+          <!-- HEADER ROW: Identity, Phone, Treatment, Language & Emotional Signal -->
+          <div class="bg-white rounded-2xl p-4 border border-stoneLine shadow-editorial">
+            <div class="flex flex-wrap items-start justify-between gap-2.5">
+              <div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <h3 class="text-[17px] font-bold text-ink tracking-tight">${lead.name}</h3>
+                  <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${lead.signalStyle}">${lead.signalLabel}</span>
+                  ${statusBadge ? `<span class="text-[10.5px] font-semibold px-2 py-0.5 rounded-full bg-wa-tint text-wa border border-wa/20">${statusBadge}</span>` : ''}
+                </div>
+                <div class="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-1.5 text-xs text-ink-muted">
+                  <span class="font-mono font-medium text-ink">${lead.phone}</span>
+                  <span class="text-stoneLine">·</span>
+                  <span class="font-semibold text-spruce">${lead.treatment}</span>
+                  <span class="text-stoneLine">·</span>
+                  <span>Spoken: <strong class="text-ink">${lead.language}</strong></span>
+                  <span class="text-stoneLine">·</span>
+                  <span>${lead.clinic}</span>
+                </div>
+              </div>
+              <span class="font-mono text-[11px] text-ink-subtle bg-ivory border border-stoneLine px-2 py-1 rounded-lg">${lead.timeAgo}</span>
+            </div>
+
+            <!-- HERO CARD: "Why You're Stepping In" + "Already Covered — Don't Re-Ask" -->
+            <div class="mt-3.5 pt-3.5 border-t border-stoneLine relative">
+              <!-- Floating PM Pin #5 -->
+              <button onclick="openRationaleModal('pin5')" class="pm-pin ${pinVis} absolute -top-2.5 -right-1 w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #5">5</button>
+
+              <p class="text-[11px] font-bold uppercase tracking-[0.09em] ${lead.bucket === 'needs_human' ? 'text-coral' : 'text-spruce'}">${lead.heroTitle}</p>
+              <ul class="mt-2 space-y-1.5">
+                ${lead.heroBullets.map(b => `
+                  <li class="flex items-start gap-2 text-[12.5px] text-ink leading-relaxed">
+                    <span class="w-1.5 h-1.5 rounded-full ${lead.bucket === 'needs_human' ? 'bg-coral' : 'bg-spruce'} mt-2 shrink-0"></span>
+                    <span>${b}</span>
+                  </li>
+                `).join('')}
+              </ul>
+
+              <!-- "Already Covered — Don't Re-Ask" Pill Strip -->
+              <div class="mt-3.5 pt-3 border-t border-stoneLine/70">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle mb-2">Already Covered — Don't Re-Ask</p>
+                <div class="flex flex-wrap gap-1.5">
+                  ${lead.coveredPills.map(pill => `
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-ivory border border-stoneLine text-[11px] font-medium text-ink">
+                      <svg class="w-3 h-3 text-spruce shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg>
+                      ${pill}
+                    </span>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- OUT-OF-THE-BOX FEATURE: "SUGGESTED OPENING LINE" BOX -->
+          <div class="bg-[#FBF8F1] rounded-2xl p-3.5 border border-[#E7DEC9] flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-amberWarm shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span class="text-[10.5px] font-bold uppercase tracking-wider text-amberWarm">Suggested Opening Line for Staff</span>
+              </div>
+              <p class="font-serif italic text-[13.5px] text-ink leading-relaxed mt-1.5">
+                ${lead.suggestedScript}
+              </p>
+            </div>
+            <button id="copy-script-btn" onclick="copySuggestedScript('${lead.id}')" class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-ivory border border-[#DFD5BE] text-[11.5px] font-semibold text-ink transition-all shadow-2xs self-start">
+              <svg class="w-3.5 h-3.5 text-spruce" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy Script</span>
+            </button>
+          </div>
+
+          <!-- SIMULATED CALL LOG STRIP (IF ACTIVE) -->
+          ${callLoggerHTML}
+
+          <!-- CONTEXT-AWARE PRIMARY ACTION BAR -->
+          <div class="flex flex-wrap items-center gap-2">
+            ${actionButtonsHTML}
+          </div>
+
+          <!-- CLINICAL GUARDRAILS VERIFICATION STRIP -->
+          <div class="bg-white rounded-xl px-3.5 py-2.5 border border-stoneLine flex flex-wrap items-center gap-x-4 gap-y-1.5 relative">
+            <!-- Floating PM Pin #6 -->
+            <button onclick="openRationaleModal('pin6')" class="pm-pin ${pinVis} absolute -top-2.5 -right-2 w-6 h-6 rounded-full bg-coral text-white text-[11px] font-bold flex items-center justify-center pm-pin-pulse z-20 cursor-pointer" title="PM Rationale #6">6</button>
+            ${lead.guardrails.map(g => `
+              <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-ink-muted">
+                <svg class="w-3.5 h-3.5 text-spruce shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd"/></svg>
+                ${g}
+              </span>
+            `).join('')}
+          </div>
+
+        </div>
+
+        <!-- EXPANDABLE BOTTOM DRAWER: CALL AUDIO, TRANSCRIPT & PER-UTTERANCE QA FEEDBACK -->
+        <div class="bg-white rounded-2xl border border-stoneLine overflow-hidden shadow-2xs">
+          <!-- Drawer Header Bar -->
+          <div class="px-4 py-2.5 bg-ivory/70 border-b border-stoneLine flex flex-wrap items-center justify-between gap-2">
+            <button onclick="toggleDrawer()" class="flex items-center gap-2 text-xs font-bold text-ink hover:text-spruce transition-colors">
+              <svg class="w-3.5 h-3.5 text-ink-muted transition-transform ${drawerExpanded ? 'rotate-180' : ''}" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+              <span>Call Audio, Transcript &amp; QA Feedback</span>
+              <span class="font-mono text-[10.5px] font-medium text-ink-muted px-1.5 py-0.5 rounded bg-white border border-stoneLine">${lead.audioDurationLabel}</span>
+            </button>
+
+            <button onclick="openFlagBox('overall')" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-stoneLine bg-white hover:border-coral/40 hover:text-coral text-[11px] font-semibold text-ink-muted transition-all">
+              <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              Flag AI Mistake
+            </button>
+          </div>
+
+          ${drawerExpanded ? renderDrawerBody(lead) : ''}
+        </div>
+      `;
+    }
+
+    function renderDrawerBody(lead) {
+      const formatTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+      const audioSection = lead.audioDurationSec > 0 ? `
+        <div class="px-4 py-3 border-b border-stoneLine/80 bg-spruce-soft/40 flex items-center gap-3">
+          <button onclick="toggleAudioPlayer()" class="w-8 h-8 rounded-full bg-spruce hover:bg-spruce-dark text-white flex items-center justify-center shrink-0 transition-colors" aria-label="${audioPlaying ? 'Pause recording' : 'Play recording'}">
+            ${audioPlaying
+              ? `<svg class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>`
+              : `<svg class="w-3.5 h-3.5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>`
+            }
+          </button>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between text-[10.5px] font-mono text-ink-muted mb-1 tabular-nums">
+              <span class="font-sans font-semibold text-ink">Asha AI Call Recording (${lead.language})</span>
+              <span><strong class="text-spruce">${formatTime(audioPos)}</strong> / ${lead.audioDurationLabel}</span>
+            </div>
+            <input type="range" min="0" max="${lead.audioDurationSec}" value="${audioPos}" oninput="scrubAudioPos(this.value)" class="audio-range w-full" aria-label="Call recording timeline" />
+          </div>
+          <button onclick="cycleAudioSpeed()" class="font-mono text-[10.5px] font-semibold px-2 py-1 rounded-lg bg-white border border-stoneLine text-ink-muted hover:text-ink shrink-0">
+            ${audioSpeed}x
+          </button>
+        </div>
+      ` : '';
+
+      const overallFlagBox = activeFlagLineId === 'overall' ? renderInlineFlagPicker('overall', 'Entire interaction') : '';
+
+      return `
+        <div>
+          ${audioSection}
+          ${overallFlagBox}
+          <!-- Synchronized Transcript with Per-Utterance QA Flagging -->
+          <div class="p-3.5 max-h-52 overflow-y-auto calm-scroll space-y-2.5">
+            ${lead.transcript.map(line => {
+              const isFlagged = flaggedLines.has(line.id);
+              const showPicker = activeFlagLineId === line.id;
+              return `
+                <div class="group rounded-xl px-2.5 py-2 ${line.isAI ? 'bg-ivory/60 hover:bg-ivory' : 'bg-white'} transition-colors">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="flex items-start gap-2.5 min-w-0">
+                      <span class="font-mono text-[10px] text-ink-subtle shrink-0 mt-0.5 w-11">${line.time}</span>
+                      <p class="text-[12px] leading-relaxed text-ink">
+                        <span class="font-bold ${line.isAI ? 'text-spruce' : 'text-ink'}">${line.speaker}:</span>
+                        <span class="text-ink-muted ml-1">${line.text}</span>
+                      </p>
+                    </div>
+                    ${line.isAI ? `
+                      <button onclick="openFlagBox('${line.id}')" class="shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded-md border transition-all ${isFlagged ? 'bg-coral-tint text-coral border-coral/30' : 'opacity-70 group-hover:opacity-100 bg-white border-stoneLine text-ink-muted hover:text-coral hover:border-coral/40'}">
+                        ${isFlagged ? 'Flagged ✓' : 'Flag issue'}
+                      </button>
+                    ` : ''}
+                  </div>
+                  ${showPicker ? renderInlineFlagPicker(line.id, `Line at ${line.time}`) : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderInlineFlagPicker(targetId, label) {
+      const tags = ['Sounded robotic', 'Should have escalated earlier', 'Language slip', 'Wrong info'];
+      return `
+        <div class="mt-2 mx-2 mb-1 p-2.5 rounded-xl bg-coral-tint/70 border border-coral/25 animate-fade-in">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[10.5px] font-bold text-coral">Quick QA Flag (${label}) — tap reason:</span>
+            <button onclick="closeFlagBox()" class="text-[10.5px] text-ink-muted hover:text-ink font-medium">Cancel</button>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            ${tags.map(tag => `
+              <button onclick="submitQuickFlag('${targetId}', '${tag}')" class="px-2.5 py-1 rounded-full bg-white hover:bg-coral hover:text-white border border-coral/25 text-[11px] font-medium text-ink transition-all">
+                ${tag}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleDrawer() {
+      drawerExpanded = !drawerExpanded;
+      if (!drawerExpanded) stopAudioPlayer();
+      renderHandoffBrief();
+    }
+
+    function openFlagBox(id) {
+      drawerExpanded = true;
+      activeFlagLineId = activeFlagLineId === id ? null : id;
+      renderHandoffBrief();
+    }
+
+    function closeFlagBox() {
+      activeFlagLineId = null;
+      renderHandoffBrief();
+    }
+
+    function submitQuickFlag(targetId, reason) {
+      flaggedLines.add(targetId);
+      activeFlagLineId = null;
+      renderHandoffBrief();
+      showToast(`Flagged "${reason}" for AI QA review — thank you!`);
+    }
+
+    // Audio Player Simulation
+    function toggleAudioPlayer() {
+      const lead = LEADS.find(l => l.id === selectedLeadId);
+      if (!lead || lead.audioDurationSec <= 0) return;
+      if (audioPlaying) {
+        stopAudioPlayer();
+      } else {
+        if (audioPos >= lead.audioDurationSec) audioPos = 0;
+        audioPlaying = true;
+        audioTimer = setInterval(() => {
+          audioPos += audioSpeed;
+          if (audioPos >= lead.audioDurationSec) {
+            audioPos = lead.audioDurationSec;
+            stopAudioPlayer();
+          }
+          renderHandoffBrief();
+        }, 1000);
+      }
+      renderHandoffBrief();
+    }
+
+    function stopAudioPlayer() {
+      audioPlaying = false;
+      clearInterval(audioTimer);
+    }
+
+    function scrubAudioPos(val) {
+      audioPos = Number(val);
+      renderHandoffBrief();
+    }
+
+    function cycleAudioSpeed() {
+      audioSpeed = audioSpeed === 1 ? 1.5 : 1;
+      renderHandoffBrief();
+    }
+
+    // Context-Aware Action Handlers
+    function openCallLogger(leadId) {
+      callLogOpenFor = callLogOpenFor === leadId ? null : leadId;
+      renderHandoffBrief();
+    }
+
+    function completeStaffCall(leadId, outcome) {
+      const lead = LEADS.find(l => l.id === leadId);
+      callLogOpenFor = null;
+      if (outcome === 'booked' && lead) {
+        leadActionStates[leadId] = 'Booked by Staff ✓';
+        showToast(`${lead.name} marked Booked & WhatsApp confirmation sent!`);
+      } else if (lead) {
+        leadActionStates[leadId] = 'Callback Logged';
+        showToast(`Callback notes saved for ${lead.name}`);
+      }
+      renderTriageQueue();
+      renderHandoffBrief();
+    }
+
+    function triggerQuickAction(leadId, statusLabel, toastMsg) {
+      leadActionStates[leadId] = statusLabel;
+      renderTriageQueue();
+      renderHandoffBrief();
+      showToast(toastMsg);
+    }
+
+    function upgradeShowUpConfidence(leadId) {
+      const lead = LEADS.find(l => l.id === leadId);
+      if (!lead) return;
+      lead.showUpLevel = 'High';
+      lead.signalLabel = 'Show-Up Confidence: High';
+      lead.signalStyle = 'bg-spruce-tint text-spruce border-spruce/20';
+      lead.dotColor = 'bg-spruce';
+      lead.queueMeta = 'Show-Up: High · WA Confirmed';
+      leadActionStates[leadId] = 'WA Reminder Sent';
+      renderTriageQueue();
+      renderHandoffBrief();
+      showToast(`WhatsApp reminder sent to ${lead.name} — Show-Up Confidence upgraded to High!`);
+    }
+
+    function copySuggestedScript(leadId) {
+      const lead = LEADS.find(l => l.id === leadId);
+      if (!lead) return;
+      copyTextWithFeedback(lead.suggestedScript.replace(/^"|"$/g, ''), 'Opening script copied to clipboard');
+      const btn = document.getElementById('copy-script-btn');
+      if (btn) {
+        btn.innerHTML = `<svg class="w-3.5 h-3.5 text-wa" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd"/></svg><span>Copied</span>`;
+        setTimeout(() => renderHandoffBrief(), 1500);
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // 8. UTILITIES (IFRAME-SAFE CLIPBOARD & EDITORIAL TOASTS)
+    // -------------------------------------------------------------------------
+    function copyTextWithFeedback(text, successMsg) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg);
+      } catch (err) {
+        showToast('Ready to paste');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(message) {
+      const stack = document.getElementById('toast-stack');
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto bg-[#18221F] text-[#F6F5F0] text-xs font-medium px-3.5 py-2.5 rounded-xl shadow-device border border-white/10 flex items-center gap-2.5 transition-all duration-300 translate-y-2 opacity-0';
+      toast.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-[#4ADE80] shrink-0"></span>
+        <span class="leading-snug">${message}</span>
+      `;
+      stack.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 280);
+      }, 3000);
+    }
+
+    // -------------------------------------------------------------------------
+    // 9. INITIALIZE PROTOTYPE ON LOAD
+    // -------------------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      startS1Countdown();
+      renderTriageQueue();
+      renderHandoffBrief();
+      setViewMode('both');
+    });
+  </script>
+</body>
+</html>
